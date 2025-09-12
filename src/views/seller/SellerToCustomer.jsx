@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { FaList } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,11 +7,15 @@ import {
   get_customers,
   messageClear,
   send_message,
+  updateMessage,
 } from "../../store/Reducers/chatSlice";
 import { Link, useParams } from "react-router-dom";
 import { socket } from "../../utils/utils";
+import toast from "react-hot-toast";
 
 const SellerToCustomer = () => {
+  const scrollRef = useRef();
+
   const dispatch = useDispatch();
 
   const [show, setShow] = useState(true);
@@ -24,6 +28,7 @@ const SellerToCustomer = () => {
   const [text, setText] = useState("");
 
   const { customerId } = useParams();
+  const [receiverMessage, setReceiverMessage] = useState("");
 
   useEffect(() => {
     dispatch(get_customers(userInfo._id));
@@ -54,6 +59,32 @@ const SellerToCustomer = () => {
       dispatch(messageClear());
     }
   }, [successMessage]);
+
+  useEffect(() => {
+    socket.on("customer_message", (msg) => {
+      setReceiverMessage(msg);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (receiverMessage) {
+      if (
+        customerId === receiverMessage.senderId &&
+        userInfo._id === receiverMessage.receiverId
+      ) {
+        dispatch(updateMessage(receiverMessage));
+      } else {
+        toast.success(
+          receiverMessage.senderName + " " + " надіслав повідомлення"
+        );
+        dispatch(messageClear());
+      }
+    }
+  }, [receiverMessage]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
     <div className="px-2 lg:px-7 py-5">
@@ -106,7 +137,7 @@ const SellerToCustomer = () => {
                   <div className="relative">
                     <img
                       className="w-[45px] h-[45px] border-green-500 border-2 max-w-[45px] p-[2px] rounded-full"
-                      src="http://localhost:5001/images/demoNEW2.png"
+                      src="http://localhost:5001/images/user.png"
                       alt=""
                     />
                     <div className="w-[10px] h-[10px] bg-green-500 rounded-full absolute right-0 bottom-0"></div>
@@ -134,13 +165,14 @@ const SellerToCustomer = () => {
                       return (
                         <div
                           key={i}
+                          ref={scrollRef}
                           className="w-full flex justify-start items-center"
                         >
                           <div className="flex justify-start items-start gap-2 md:px-3 py-2 max-w-full lg:max-w-[85%]">
                             <div>
                               <img
                                 className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src="http://localhost:5001/images/demoNEW2.png"
+                                src="http://localhost:5001/images/user.png"
                                 alt=""
                               />
                             </div>
@@ -154,6 +186,7 @@ const SellerToCustomer = () => {
                       return (
                         <div
                           key={i}
+                          ref={scrollRef}
                           className="w-full flex justify-end items-center"
                         >
                           <div className="flex justify-start items-start gap-2 md:px-3 py-2 max-w-full lg:max-w-[85%]">
