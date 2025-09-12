@@ -5,7 +5,7 @@ import { jwtDecode } from "jwt-decode";
 export const admin_login = createAsyncThunk(
   "auth/admin_login",
   async (info, { rejectWithValue, fulfillWithValue }) => {
-    console.log(info);
+    // console.log(info);
     try {
       const { data } = await api.post("/admin-login", info, {
         withCredentials: true,
@@ -23,7 +23,7 @@ export const admin_login = createAsyncThunk(
 export const seller_login = createAsyncThunk(
   "auth/seller_login",
   async (info, { rejectWithValue, fulfillWithValue }) => {
-    console.log(info);
+    // console.log(info);
     try {
       const { data } = await api.post("/seller-login", info, {
         withCredentials: true,

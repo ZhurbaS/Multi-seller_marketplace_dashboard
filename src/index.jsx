@@ -12,24 +12,24 @@ import { Toaster } from "react-hot-toast";
 const root = createRoot(document.getElementById("root"));
 
 root.render(
-  <StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <Suspense fallback={<div>Завантаження...</div>}>
-          <App />
-          <Toaster
-            toastOptions={{
-              position: "bottom-right",
-              style: {
-                background: "#283046",
-                color: "white",
-              },
-            }}
-          />
-        </Suspense>
-      </BrowserRouter>
-    </Provider>
-  </StrictMode>
+  // <StrictMode>
+  <Provider store={store}>
+    <BrowserRouter>
+      <Suspense fallback={<div>Завантаження...</div>}>
+        <App />
+        <Toaster
+          toastOptions={{
+            position: "bottom-right",
+            style: {
+              background: "#283046",
+              color: "white",
+            },
+          }}
+        />
+      </Suspense>
+    </BrowserRouter>
+  </Provider>
+  // </StrictMode>
 );
 
 reportWebVitals();
