@@ -71,6 +71,83 @@ export const send_message = createAsyncThunk(
   }
 );
 
+export const get_sellers = createAsyncThunk(
+  "chat/get_sellers",
+  async (_, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.get(`/chat/admin/get-sellers`, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error("💥 Error in chatSlice: get_sellers:", error.response.data);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const send_message_seller_admin = createAsyncThunk(
+  "chat/send_message_seller_admin",
+  async (info, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.post(`/chat/message-send-seller-admin`, info, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error(
+        "💥 Error in chatSlice: send_message_seller_admin:",
+        error.response.data
+      );
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const get_admin_message = createAsyncThunk(
+  "chat/get_admin_message",
+  async (receiverId, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.get(`/chat/get-admin-messages/${receiverId}`, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error(
+        "💥 Error in chatSlice: get_admin_message:",
+        error.response.data
+      );
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const get_seller_message = createAsyncThunk(
+  "chat/get_seller_message",
+  async (_, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.get(`/chat/get-seller-messages`, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error(
+        "💥 Error in chatSlice: get_seller_message:",
+        error.response.data
+      );
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const chatSlice = createSlice({
   name: "chat",
   initialState: {
@@ -94,6 +171,12 @@ export const chatSlice = createSlice({
     },
     updateMessage: (state, { payload }) => {
       state.messages = [...state.messages, payload];
+    },
+    updateSellers: (state, { payload }) => {
+      state.activeSeller = payload;
+    },
+    updateCustomer: (state, { payload }) => {
+      state.activeCustomer = payload;
     },
   },
   extraReducers: (builder) => {
@@ -120,8 +203,26 @@ export const chatSlice = createSlice({
         state.customers = tempFriends;
         state.messages = [...state.messages, payload.message];
         state.successMessage = "Message sent successfully";
+      })
+      .addCase(get_sellers.fulfilled, (state, { payload }) => {
+        state.sellers = payload.sellers;
+      })
+      .addCase(send_message_seller_admin.fulfilled, (state, { payload }) => {
+        state.seller_admin_message = [
+          ...state.seller_admin_message,
+          payload.message,
+        ];
+        state.successMessage = "Message sent successfully";
+      })
+      .addCase(get_admin_message.fulfilled, (state, { payload }) => {
+        state.seller_admin_message = payload.messages;
+        state.currentSeller = payload.currentSeller;
+      })
+      .addCase(get_seller_message.fulfilled, (state, { payload }) => {
+        state.seller_admin_message = payload.messages;
       });
   },
 });
-export const { messageClear, updateMessage } = chatSlice.actions;
+export const { messageClear, updateMessage, updateSellers, updateCustomer } =
+  chatSlice.actions;
 export default chatSlice.reducer;
