@@ -178,6 +178,12 @@ export const chatSlice = createSlice({
     updateCustomer: (state, { payload }) => {
       state.activeCustomer = payload;
     },
+    updateAdminMessage: (state, { payload }) => {
+      state.seller_admin_message = [...state.seller_admin_message, payload];
+    },
+    updateSellerMessage: (state, { payload }) => {
+      state.seller_admin_message = [...state.seller_admin_message, payload];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -189,7 +195,7 @@ export const chatSlice = createSlice({
         state.messages = payload.messages;
       })
       .addCase(send_message.fulfilled, (state, { payload }) => {
-        let tempFriends = state.customers;
+        let tempFriends = [...state.customers];
         let index = tempFriends.findIndex(
           (f) => f.fdId === payload.message.receiverId
         );
@@ -223,6 +229,12 @@ export const chatSlice = createSlice({
       });
   },
 });
-export const { messageClear, updateMessage, updateSellers, updateCustomer } =
-  chatSlice.actions;
+export const {
+  messageClear,
+  updateMessage,
+  updateSellers,
+  updateCustomer,
+  updateAdminMessage,
+  updateSellerMessage,
+} = chatSlice.actions;
 export default chatSlice.reducer;

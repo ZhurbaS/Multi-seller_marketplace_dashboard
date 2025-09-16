@@ -1,22 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { FaList } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import {
   get_admin_message,
   get_sellers,
+  messageClear,
   send_message_seller_admin,
+  updateAdminMessage,
+  updateSellerMessage,
 } from "../../store/Reducers/chatSlice";
 import { Link, useParams } from "react-router-dom";
 import { FaGrinHearts } from "react-icons/fa";
 
+import { socket } from "../../utils/utils";
+import toast from "react-hot-toast";
+
 const ChatSeller = () => {
+  const scrollRef = useRef();
   const [show, setShow] = useState(true);
   const { sellerId } = useParams();
   const [text, setText] = useState("");
+  const [receiverMessage, setReceiverMessage] = useState("");
 
-  const { sellers, activeSeller, seller_admin_message, currentSeller } =
-    useSelector((state) => state.chat);
+  const {
+    sellers,
+    activeSeller,
+    seller_admin_message,
+    currentSeller,
+    successMessage,
+  } = useSelector((state) => state.chat);
 
   const dispatch = useDispatch();
 
@@ -42,6 +55,42 @@ const ChatSeller = () => {
       dispatch(get_admin_message(sellerId));
     }
   }, [sellerId]);
+
+  useEffect(() => {
+    if (successMessage) {
+      socket.emit(
+        "send_message_admin_to_seller",
+        seller_admin_message[seller_admin_message.length - 1]
+      );
+      dispatch(messageClear());
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    socket.on("received_seller_message", (msg) => {
+      setReceiverMessage(msg);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (receiverMessage) {
+      if (
+        receiverMessage.senderId === sellerId &&
+        receiverMessage.receiverId === ""
+      ) {
+        dispatch(updateSellerMessage(receiverMessage));
+      } else {
+        toast.success(
+          receiverMessage.senderName + " " + " надіслав повідомлення"
+        );
+        dispatch(messageClear());
+      }
+    }
+  }, [receiverMessage]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [seller_admin_message]);
 
   return (
     <div className="px-2 lg:px-7 py-5">
@@ -125,12 +174,15 @@ const ChatSeller = () => {
                   seller_admin_message.map((m, i) => {
                     if (m.senderId === sellerId) {
                       return (
-                        <div className="w-full flex justify-start items-center">
+                        <div
+                          ref={scrollRef}
+                          className="w-full flex justify-start items-center"
+                        >
                           <div className="flex justify-start items-start gap-2 md:px-3 py-2 max-w-full lg:max-w-[85%]">
                             <div>
                               <img
                                 className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src="http://localhost:5001/images/adminNEW.jpg"
+                                src={currentSeller?.image}
                                 alt=""
                               />
                             </div>
@@ -142,7 +194,10 @@ const ChatSeller = () => {
                       );
                     } else {
                       return (
-                        <div className="w-full flex justify-end items-center">
+                        <div
+                          ref={scrollRef}
+                          className="w-full flex justify-end items-center"
+                        >
                           <div className="flex justify-start items-start gap-2 md:px-3 py-2 max-w-full lg:max-w-[85%]">
                             <div className="flex justify-center items-start flex-col w-full bg-red-500 shadow-lg shadow-red-500/50 text-white py-1 px-2 rounded-sm">
                               <span>{m.message}</span>
