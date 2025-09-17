@@ -60,6 +60,64 @@ export const admin_order_status_update = createAsyncThunk(
   }
 );
 
+export const get_seller_orders = createAsyncThunk(
+  "order/get_seller_orders",
+  async (
+    { perPage, page, searchValue, sellerId },
+    { rejectWithValue, fulfillWithValue }
+  ) => {
+    try {
+      const { data } = await api.get(
+        `/seller/orders/${sellerId}?page=${page}&searchValue=${searchValue}&perPage=${perPage}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(handleThunkError(error));
+    }
+  }
+);
+
+export const get_seller_order_details = createAsyncThunk(
+  "order/get_admin_order_deseller",
+  async (orderId, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.get(`/seller/order/${orderId}`, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(handleThunkError(error));
+    }
+  }
+);
+
+export const seller_order_status_update = createAsyncThunk(
+  "order/seller_order_status_update",
+  async ({ orderId, info }, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.put(
+        `/seller/order-status/update/${orderId}`,
+        info,
+        {
+          withCredentials: true,
+        }
+      );
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(handleThunkError(error));
+    }
+  }
+);
+
 export const orderSlice = createSlice({
   name: "order",
 
@@ -89,6 +147,19 @@ export const orderSlice = createSlice({
         state.errorMessage = payload.message;
       })
       .addCase(admin_order_status_update.fulfilled, (state, { payload }) => {
+        state.successMessage = payload.message;
+      })
+      .addCase(get_seller_orders.fulfilled, (state, { payload }) => {
+        state.totalOrderCount = payload.totalOrderCount;
+        state.myOrdersArr = payload.myOrdersArr;
+      })
+      .addCase(get_seller_order_details.fulfilled, (state, { payload }) => {
+        state.order = payload.order;
+      })
+      .addCase(seller_order_status_update.rejected, (state, { payload }) => {
+        state.errorMessage = payload.message;
+      })
+      .addCase(seller_order_status_update.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
       });
   },
