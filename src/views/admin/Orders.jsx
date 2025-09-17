@@ -1,14 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BsArrowBarDown } from "react-icons/bs";
 import Pagination from "../Pagination";
 import { toast } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { get_admin_orders } from "../../store/Reducers/orderSlice";
 
 const Orders = () => {
+  const dispatch = useDispatch();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
   const [perPage, setPerPage] = useState(5);
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(null);
+
+  const { totalOrderCount, myOrdersArr } = useSelector((state) => state.order);
+
+  const toggleSuborder = (orderId) => {
+    // Якщо клікаємо на відкрите замовлення, закриваємо його
+    setShow((prev) => (prev === orderId ? null : orderId));
+  };
+
+  useEffect(() => {
+    const obj = {
+      perPage: parseInt(perPage),
+      page: parseInt(currentPage),
+      searchValue,
+    };
+    dispatch(get_admin_orders(obj));
+  }, [searchValue, currentPage, perPage]);
 
   return (
     <div className="px-2 lg:px-7 pt-5">
@@ -23,6 +43,8 @@ const Orders = () => {
             <option value="20">20</option>
           </select>
           <input
+            onChange={(e) => setSearchValue(e.target.value)}
+            value={searchValue}
             className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
             type="text"
             placeholder="Пошук"
@@ -38,202 +60,84 @@ const Orders = () => {
                 <div className="py-3 w-[18%] font-bold">Статус оплати</div>
                 <div className="py-3 w-[18%] font-bold">Статус замовлення</div>
                 <div className="py-3 w-[18%] font-bold">Дія</div>
-                <div className="py-3 w-[8%] font-bold">
-                  <BsArrowBarDown />
-                </div>
+                <div className="py-3 w-[8%] font-bold">Деталі</div>
               </div>
             </div>
 
-            <div className="text-[#d0d2d6]">
-              <div className="flex justify-between items-start border-b border-slate-700">
-                <div className="py-3 w-[25%] font-medium whitespace-nowrap">
-                  #56565
+            {myOrdersArr.map((o, i) => (
+              <div key={o._id} className="text-[#d0d2d6]">
+                <div className="flex justify-between items-start border-b border-slate-700">
+                  <div className="py-3 w-[25%] font-medium whitespace-nowrap">
+                    #{o._id}
+                  </div>
+                  <div className="py-3 w-[13%] font-medium">₴{o.price}</div>
+                  <div className="py-3 w-[18%] font-medium">
+                    {o.payment_status}
+                  </div>
+                  <div className="py-3 w-[18%] font-medium">
+                    {o.delivery_status}
+                  </div>
+                  <div className="py-3 w-[18%] font-medium">
+                    <Link
+                      to={`/admin/dashboard/order/details/${o._id}`}
+                      className="inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-200"
+                    >
+                      Переглянути
+                    </Link>
+                  </div>
+                  <div
+                    onClick={() => toggleSuborder(o._id)}
+                    className="py-3 w-[8%] font-bold cursor-pointer"
+                  >
+                    <BsArrowBarDown />
+                  </div>
                 </div>
-                <div className="py-3 w-[13%] font-medium">₴750</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">
-                  <Link to="/admin/dashboard/order/details/3">Переглянути</Link>
-                </div>
+
                 <div
-                  onClick={(e) => setShow(!show)}
-                  className="py-3 w-[8%] font-bold"
+                  className={
+                    show === o._id
+                      ? "block border-b border-slate-700 bg-[#8288ed]"
+                      : "hidden"
+                  }
                 >
-                  <BsArrowBarDown />
+                  {o.suborder.map((so, i) => (
+                    <div
+                      key={so._id}
+                      className="flex justify-start items-start border-b border-slate-700"
+                    >
+                      <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
+                        #{so._id}
+                      </div>
+                      <div className="py-3 w-[13%] font-medium">
+                        ₴{so.price}
+                      </div>
+                      <div className="py-3 w-[18%] font-medium">
+                        {so.payment_status}
+                      </div>
+                      <div className="py-3 w-[18%] font-medium">
+                        {so.delivery_status}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div
-                className={
-                  show
-                    ? "block border-b border-slate-700 bg-[#8288ed]"
-                    : "hidden"
-                }
-              >
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-[#d0d2d6]">
-              <div className="flex justify-between items-start border-b border-slate-700">
-                <div className="py-3 w-[25%] font-medium whitespace-nowrap">
-                  #56565
-                </div>
-                <div className="py-3 w-[13%] font-medium">₴750</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">
-                  <Link to="/admin/dashboard/order/details/3">Переглянути</Link>
-                </div>
-                <div
-                  onClick={(e) => setShow(!show)}
-                  className="py-3 w-[8%] font-bold"
-                >
-                  <BsArrowBarDown />
-                </div>
-              </div>
-              <div
-                className={
-                  show
-                    ? "block border-b border-slate-700 bg-[#8288ed]"
-                    : "hidden"
-                }
-              >
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-[#d0d2d6]">
-              <div className="flex justify-between items-start border-b border-slate-700">
-                <div className="py-3 w-[25%] font-medium whitespace-nowrap">
-                  #56565
-                </div>
-                <div className="py-3 w-[13%] font-medium">₴750</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">
-                  <Link to="/admin/dashboard/order/details/3">Переглянути</Link>
-                </div>
-                <div
-                  onClick={(e) => setShow(!show)}
-                  className="py-3 w-[8%] font-bold"
-                >
-                  <BsArrowBarDown />
-                </div>
-              </div>
-              <div
-                className={
-                  show
-                    ? "block border-b border-slate-700 bg-[#8288ed]"
-                    : "hidden"
-                }
-              >
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-[#d0d2d6]">
-              <div className="flex justify-between items-start border-b border-slate-700">
-                <div className="py-3 w-[25%] font-medium whitespace-nowrap">
-                  #56565
-                </div>
-                <div className="py-3 w-[13%] font-medium">₴750</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                <div className="py-3 w-[18%] font-medium">
-                  <Link to="/admin/dashboard/order/details/3">Переглянути</Link>
-                </div>
-                <div
-                  onClick={(e) => setShow(!show)}
-                  className="py-3 w-[8%] font-bold"
-                >
-                  <BsArrowBarDown />
-                </div>
-              </div>
-              <div
-                className={
-                  show
-                    ? "block border-b border-slate-700 bg-[#8288ed]"
-                    : "hidden"
-                }
-              >
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-
-                <div className="flex justify-start items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                    #56511
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴450</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                  <div className="py-3 w-[18%] font-medium">В очікуванні</div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-        <div className="w-full flex justify-end mt-4 bottom-4 right-4">
-          <Pagination
-            pageNumber={currentPage}
-            setPageNumber={setCurrentPage}
-            totalItem={50}
-            perPage={perPage}
-            showItem={3}
-          />
-        </div>
+
+        {totalOrderCount <= perPage ? (
+          ""
+        ) : (
+          <div className="w-full flex justify-end mt-4 bottom-4 right-4">
+            <Pagination
+              pageNumber={currentPage}
+              setPageNumber={setCurrentPage}
+              totalItem={totalOrderCount}
+              perPage={perPage}
+              showItem={4}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

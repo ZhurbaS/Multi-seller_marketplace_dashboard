@@ -92,6 +92,28 @@ export const get_active_sellers = createAsyncThunk(
   }
 );
 
+export const get_deactive_sellers = createAsyncThunk(
+  "seller/get_deactive_sellers",
+  async (
+    { perPage, page, searchValue },
+    { rejectWithValue, fulfillWithValue }
+  ) => {
+    try {
+      const { data } = await api.get(
+        `/get-deactive-sellers?page=${page}&searchValue=${searchValue}&perPage=${perPage}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(handleThunkError(error));
+    }
+  }
+);
+
 export const sellerSlice = createSlice({
   name: "seller",
 
@@ -122,6 +144,10 @@ export const sellerSlice = createSlice({
         state.successMessage = payload.message;
       })
       .addCase(get_active_sellers.fulfilled, (state, { payload }) => {
+        state.sellers = payload.sellers;
+        state.totalSeller = payload.totalSeller;
+      })
+      .addCase(get_deactive_sellers.fulfilled, (state, { payload }) => {
         state.sellers = payload.sellers;
         state.totalSeller = payload.totalSeller;
       });
