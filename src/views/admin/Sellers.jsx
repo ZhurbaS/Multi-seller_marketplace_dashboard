@@ -1,13 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination";
 import { FaEye } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { get_active_sellers } from "../../store/Reducers/sellerSlice";
 
 const Sellers = () => {
+  const dispatch = useDispatch();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
   const [perPage, setPerPage] = useState(5);
   const [show, setShow] = useState(false);
+
+  const { sellers, totalSeller } = useSelector((state) => state.seller);
+
+  useEffect(() => {
+    const obj = {
+      perPage: parseInt(perPage),
+      page: parseInt(currentPage),
+      searchValue,
+    };
+    dispatch(get_active_sellers(obj));
+  }, [searchValue, currentPage, perPage]);
 
   return (
     <div className="px-2 lg:px-7 pt-5">
@@ -23,6 +38,8 @@ const Sellers = () => {
             <option value="20">20</option>
           </select>
           <input
+            onChange={(e) => setSearchValue(e.target.value)}
+            value={searchValue}
             className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
             type="text"
             placeholder="Пошук"
@@ -51,7 +68,7 @@ const Sellers = () => {
                   Email
                 </th>
                 <th scope="col" className="py-3 px-4">
-                  Місто
+                  Статус
                 </th>
                 <th scope="col" className="py-3 px-4">
                   Район
@@ -63,66 +80,65 @@ const Sellers = () => {
             </thead>
 
             <tbody>
-              {[1, 2, 3, 4, 5].map((d, i) => (
-                <tr key={i}>
+              {sellers.map((d, i) => (
+                <tr key={d._id}>
                   <td
                     scope="row"
                     className="py-1 px-6 font-medium whitespace-nowrap"
                   >
-                    {d}
+                    {i + 1}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    <img
-                      className="w-[45px] h-[45px] "
-                      src={`http://localhost:5173/images/category/${d}.jpg`}
-                      alt=""
-                    />
+                    <img className="w-[45px] h-[45px] " src={d.image} alt="" />
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    Сергій Журба
+                    {d.name}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    TechScout
+                    {d.shopInfo?.shopName}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    <span>В очікуванні</span>
+                    <span>{d.payment}</span>
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    TechScout@gmail.com
+                    {d.email}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    Київ
+                    {d.status}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    Шевченківський
+                    {d.shopInfo?.district}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
                     <div className="flex justify-start items-center gap-4">
-                      <Link className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  ">
+                      <Link
+                        to={`/admin/dashboard/seller/details/${d._id}`}
+                        className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  "
+                      >
                         <FaEye />
                       </Link>
                     </div>
@@ -132,15 +148,20 @@ const Sellers = () => {
             </tbody>
           </table>
         </div>
-        <div className="w-full flex justify-end mt-4 bottom-4 right-4">
-          <Pagination
-            pageNumber={currentPage}
-            setPageNumber={setCurrentPage}
-            totalItem={50}
-            perPage={perPage}
-            showItem={3}
-          />
-        </div>
+
+        {totalSeller <= perPage ? (
+          <div className="w-full flex justify-end mt-4 bottom-4 right-4">
+            <Pagination
+              pageNumber={currentPage}
+              setPageNumber={setCurrentPage}
+              totalItem={totalSeller}
+              perPage={perPage}
+              showItem={4}
+            />
+          </div>
+        ) : (
+          ""
+        )}
       </div>
     </div>
   );

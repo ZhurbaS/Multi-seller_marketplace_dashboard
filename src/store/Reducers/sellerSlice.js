@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../api/api";
+import { handleThunkError } from "../../utils/handleThunkError";
 
 export const get_seller_request = createAsyncThunk(
   "seller/get_seller_request",
@@ -69,6 +70,28 @@ export const seller_status_update = createAsyncThunk(
   }
 );
 
+export const get_active_sellers = createAsyncThunk(
+  "seller/get_active_sellers",
+  async (
+    { perPage, page, searchValue },
+    { rejectWithValue, fulfillWithValue }
+  ) => {
+    try {
+      const { data } = await api.get(
+        `/get-sellers?page=${page}&searchValue=${searchValue}&perPage=${perPage}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(handleThunkError(error));
+    }
+  }
+);
+
 export const sellerSlice = createSlice({
   name: "seller",
 
@@ -97,6 +120,10 @@ export const sellerSlice = createSlice({
       .addCase(seller_status_update.fulfilled, (state, { payload }) => {
         state.seller = payload.seller;
         state.successMessage = payload.message;
+      })
+      .addCase(get_active_sellers.fulfilled, (state, { payload }) => {
+        state.sellers = payload.sellers;
+        state.totalSeller = payload.totalSeller;
       });
   },
 });
