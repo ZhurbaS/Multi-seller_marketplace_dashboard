@@ -114,6 +114,29 @@ export const get_deactive_sellers = createAsyncThunk(
   }
 );
 
+
+export const create_stripe_connect_account = createAsyncThunk(
+  "seller/create_stripe_connect_account",
+  async (
+    { perPage, page, searchValue },
+    { rejectWithValue, fulfillWithValue }
+  ) => {
+    try {
+      const { data } = await api.get(
+        `/get-deactive-sellers?page=${page}&searchValue=${searchValue}&perPage=${perPage}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(handleThunkError(error));
+    }
+  }
+);
+
 export const sellerSlice = createSlice({
   name: "seller",
 
