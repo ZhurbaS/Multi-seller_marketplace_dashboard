@@ -114,22 +114,40 @@ export const get_deactive_sellers = createAsyncThunk(
   }
 );
 
-
 export const create_stripe_connect_account = createAsyncThunk(
   "seller/create_stripe_connect_account",
-  async (
-    { perPage, page, searchValue },
-    { rejectWithValue, fulfillWithValue }
-  ) => {
+  async () => {
     try {
-      const { data } = await api.get(
-        `/get-deactive-sellers?page=${page}&searchValue=${searchValue}&perPage=${perPage}`,
-        {
-          withCredentials: true,
-        }
+      const {
+        data: { url },
+      } = await api.get(`/payment/create-stripe-connect-account`, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+
+      window.location.href = url;
+    } catch (error) {
+      console.error(
+        "💥 Error in sellerSlice: create_stripe_connect_account:",
+        error?.response?.data
+      );
+    }
+  }
+);
+
+export const active_stripe_connect_account = createAsyncThunk(
+  "seller/active_stripe_connect_account",
+  async (activeCode, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.put(
+        `/payment/active-stripe-connect-account/${activeCode}`,
+        {},
+        { withCredentials: true }
       );
 
       // console.log(data);
+
       return fulfillWithValue(data);
     } catch (error) {
       return rejectWithValue(handleThunkError(error));
@@ -150,6 +168,7 @@ export const sellerSlice = createSlice({
   },
   reducers: {
     messageClear: (state, _) => {
+      state.successMessage = "";
       state.errorMessage = "";
     },
   },
@@ -173,7 +192,21 @@ export const sellerSlice = createSlice({
       .addCase(get_deactive_sellers.fulfilled, (state, { payload }) => {
         state.sellers = payload.sellers;
         state.totalSeller = payload.totalSeller;
-      });
+      })
+      .addCase(active_stripe_connect_account.pending, (state, { payload }) => {
+        state.loader = true;
+      })
+      .addCase(active_stripe_connect_account.rejected, (state, { payload }) => {
+        state.loader = false;
+        state.errorMessage = payload.message;
+      })
+      .addCase(
+        active_stripe_connect_account.fulfilled,
+        (state, { payload }) => {
+          state.loader = false;
+          state.successMessage = payload.message;
+        }
+      );
   },
 });
 export const { messageClear } = sellerSlice.actions;
