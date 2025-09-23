@@ -65,6 +65,25 @@ const Payment = () => {
     );
   };
 
+  const Rows = ({ index, style }) => {
+    return (
+      <div style={style} className="flex text-sm text-white font-medium">
+        <div className="w-[25%] p-2 whitespace-nowrap">{index + 1}</div>
+        <div className="w-[25%] p-2 whitespace-nowrap">
+          ₴{successWithdrawals[index]?.amount}
+        </div>
+        <div className="w-[25%] p-2 whitespace-nowrap">
+          <span className="py-[1px] px-[5px] bg-slate-300 text-blue-500 rounded-md text-sm">
+            {successWithdrawals[index]?.status}
+          </span>
+        </div>
+        <div className="w-[25%] p-2 whitespace-nowrap">
+          {moment(successWithdrawals[index]?.createdAt).format("LL")}
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     dispatch(get_seller_payment_details(userInfo._id));
   }, []);
@@ -106,7 +125,7 @@ const Payment = () => {
         <div className="flex justify-between items-center p-5 bg-[#e9feea] rounded-md gap-3">
           <div className="flex flex-col justify-start items-start text-[#5c5a5a]">
             <h2 className="text-2xl font-bold">₴{withdrawalAmount}</h2>
-            <span className="text-sm font-bold">Сума на зняття</span>
+            <span className="text-sm font-bold">Надходження</span>
           </div>
           <div className="w-[40px] h-[47px] rounded-full bg-[#038000] flex justify-center items-center text-xl">
             <FaHryvniaSign className="text-[#fae8e8] shadow-lg" />
@@ -175,7 +194,7 @@ const Payment = () => {
         </div>
         <div className="bg-[#6a5fdf] text-[#d0d2d6] rounded-md p-5">
           <div>
-            <h2 className="text-lg pb-4">Запити на зняття коштів</h2>
+            <h2 className="text-lg pb-4">Успішне зняття коштів</h2>
 
             <div className="size-full overflow-x-auto">
               <div className="flex bg-[#a7a3de] uppercase text-xs font-bold min-w-[340px] rounded-md">
@@ -189,11 +208,11 @@ const Payment = () => {
                   style={{ minWidth: "340px" }}
                   className="List"
                   height={350}
-                  itemCount={10}
+                  itemCount={successWithdrawals.length}
                   itemSize={35}
                   outerElementType={outerElementType}
                 >
-                  {Row}
+                  {Rows}
                 </List>
               }
             </div>
