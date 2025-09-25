@@ -1,6 +1,7 @@
 import authSlice from "./Reducers/authSlice";
 import categorySlice from "./Reducers/categorySlice";
 import chatSlice from "./Reducers/chatSlice";
+import dashboardSlice from "./Reducers/dashboardSlice";
 import orderSlice from "./Reducers/orderSlice";
 import PaymentSlice from "./Reducers/paymentSlice";
 import productSlice from "./Reducers/productSlice";
@@ -14,6 +15,7 @@ const rootReducer = {
   chat: chatSlice,
   order: orderSlice,
   payment: PaymentSlice,
+  dashboard: dashboardSlice,
 };
 
 export default rootReducer;
