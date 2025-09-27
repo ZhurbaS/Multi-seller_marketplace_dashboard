@@ -22,8 +22,11 @@ const SellerDashboard = () => {
   const { userInfo } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(get_seller_dashboard_data());
-  }, []);
+    // dispatch(get_seller_dashboard_data());
+    if (userInfo && userInfo.role === "seller") {
+      dispatch(get_seller_dashboard_data());
+    }
+  }, [dispatch, userInfo]);
 
   const state = {
     series: [

@@ -6,6 +6,7 @@ import { FaEdit, FaEye } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { get_products } from "../../store/Reducers/productSlice";
+import { RiImageEditLine } from "react-icons/ri";
 
 const Products = () => {
   const dispatch = useDispatch();
@@ -138,6 +139,14 @@ const Products = () => {
                       >
                         <FaEdit />
                       </Link>
+
+                      <Link
+                        to={`/seller/dashboard/add-banner/${product._id}`}
+                        className="p-[6px] bg-sky-500 rounded hover:shadow-lg hover:shadow-yellow-500/50  "
+                      >
+                        <RiImageEditLine />
+                      </Link>
+
                       <Link className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  ">
                         <FaEye />
                       </Link>
