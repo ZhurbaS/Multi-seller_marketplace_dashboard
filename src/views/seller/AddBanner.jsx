@@ -155,7 +155,7 @@ const AddBanner = () => {
                 {loader ? (
                   <PropagateLoader color="#fff" cssOverride={overrideStyle} />
                 ) : (
-                  "Додати банер"
+                  "Оновити банер"
                 )}
               </button>
             </form>
