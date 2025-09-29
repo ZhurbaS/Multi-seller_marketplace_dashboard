@@ -7,6 +7,7 @@ import {
   profile_image_upload,
   messageClear,
   profile_info_add,
+  change_password,
 } from "../../store/Reducers/authSlice";
 import { overrideStyle } from "../../utils/utils";
 import toast from "react-hot-toast";
@@ -30,16 +31,16 @@ const Profile = () => {
   };
 
   const dispatch = useDispatch();
-  const { userInfo, loader, successMessage } = useSelector(
+  const { userInfo, loader, successMessage, errorMessage } = useSelector(
     (state) => state.auth
   );
 
-  useEffect(() => {
-    if (successMessage) {
-      toast.success(successMessage);
-      messageClear();
-    }
-  }, [successMessage]);
+  // useEffect(() => {
+  //   if (successMessage) {
+  //     toast.success(successMessage);
+  //     dispatch(messageClear());
+  //   }
+  // }, [successMessage]);
 
   const add_image = (e) => {
     if (e.target.files.length > 0) {
@@ -54,6 +55,35 @@ const Profile = () => {
     e.preventDefault();
     dispatch(profile_info_add(state));
   };
+
+  const [passwordData, setPasswordData] = useState({
+    email: "",
+    old_password: "",
+    new_password: "",
+  });
+
+  const passwordInputHandle = (e) => {
+    setPasswordData({
+      ...passwordData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    dispatch(change_password(passwordData));
+  };
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch(messageClear());
+    }
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
+    }
+  }, [successMessage, errorMessage]);
 
   return (
     <div className="px-2 lg:px-7 py-5">
@@ -265,12 +295,14 @@ const Profile = () => {
               <h1 className="text-[#d0d2d6] text-lg mb-3 font-semibold">
                 Змінити пароль
               </h1>
-              <form>
+              <form onSubmit={handlePasswordChange}>
                 <div className="flex flex-col w-full gap-1 mb-2">
                   <label htmlFor="email">Email</label>
                   <input
+                    value={passwordData.email}
+                    onChange={passwordInputHandle}
                     className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-                    type="text"
+                    type="email"
                     name="email"
                     id="email"
                     placeholder="Email"
@@ -279,6 +311,8 @@ const Profile = () => {
                 <div className="flex flex-col w-full gap-1 mb-2">
                   <label htmlFor="o_password">Діючий пароль</label>
                   <input
+                    value={passwordData.old_password}
+                    onChange={passwordInputHandle}
                     className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
                     type="password"
                     name="old_password"
@@ -289,6 +323,8 @@ const Profile = () => {
                 <div className="flex flex-col w-full gap-1 mb-2">
                   <label htmlFor="n_password">Новий пароль</label>
                   <input
+                    onChange={passwordInputHandle}
+                    value={passwordData.new_password}
                     className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
                     type="password"
                     name="new_password"
@@ -297,8 +333,11 @@ const Profile = () => {
                   />
                 </div>
 
-                <button className="bg-red-500 hover:shadow-red-500/40 hover:shadow-md text-white rounded-md px-7 py-2 my-2">
-                  Зберегти зміни
+                <button
+                  disabled={loader}
+                  className="bg-red-500 hover:shadow-red-500/40 hover:shadow-md text-white rounded-md px-7 py-2 my-2"
+                >
+                  {loader ? "Завантаження" : "Зберегти зміни"}
                 </button>
               </form>
             </div>

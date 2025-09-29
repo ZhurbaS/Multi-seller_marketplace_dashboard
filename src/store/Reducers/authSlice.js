@@ -142,6 +142,22 @@ export const logout = createAsyncThunk(
   }
 );
 
+export const change_password = createAsyncThunk(
+  "auth/change_password",
+  async (info, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.post("/change-password", info, {
+        withCredentials: true,
+      });
+      // console.log(data);
+      return fulfillWithValue(data.message);
+    } catch (error) {
+      // console.log(error.response.data);
+      return rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: "auth",
   // ======
@@ -155,6 +171,7 @@ export const authSlice = createSlice({
   },
   reducers: {
     messageClear: (state, _) => {
+      state.successMessage = "";
       state.errorMessage = "";
     },
     // logout: (state) => {
@@ -226,6 +243,20 @@ export const authSlice = createSlice({
         state.loader = false;
         state.userInfo = payload.userInfo;
         state.successMessage = payload.message;
+      })
+
+      // change_password
+      .addCase(change_password.pending, (state) => {
+        state.loader = true;
+        state.errorMessage = null;
+      })
+      .addCase(change_password.rejected, (state, action) => {
+        state.loader = false;
+        state.errorMessage = action.payload;
+      })
+      .addCase(change_password.fulfilled, (state, action) => {
+        state.loader = false;
+        state.successMessage = action.payload;
       });
   },
 });
