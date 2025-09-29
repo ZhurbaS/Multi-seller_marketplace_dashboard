@@ -50,6 +50,47 @@ export const get_category = createAsyncThunk(
   }
 );
 
+export const updateCategory = createAsyncThunk(
+  "category/updateCategory",
+  async ({ id, name, image }, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      if (image) {
+        formData.append("image", image);
+      }
+      const { data } = await api.put(`/category-update/${id}`, formData, {
+        withCredentials: true,
+      });
+
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      // console.log(error.response.data);
+      const message =
+        error?.response?.data?.error || "⛔ Unknown error occurred";
+
+      return rejectWithValue({ error: message });
+    }
+  }
+);
+
+export const deleteCategory = createAsyncThunk(
+  "category/deleteCategory",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.delete(`/category/${id}`);
+
+      return response.data;
+    } catch (error) {
+      const message =
+        error?.response?.data?.error || "⛔ Unknown error occurred";
+
+      return rejectWithValue({ error: message });
+    }
+  }
+);
+
 export const categorySlice = createSlice({
   name: "category",
 
@@ -83,6 +124,32 @@ export const categorySlice = createSlice({
       .addCase(get_category.fulfilled, (state, { payload }) => {
         state.totalCategory = payload.totalCategory;
         state.categories = payload.categories;
+      })
+
+      .addCase(updateCategory.rejected, (state, { payload }) => {
+        state.loader = false;
+        state.errorMessage = payload.error;
+      })
+      .addCase(updateCategory.fulfilled, (state, { payload }) => {
+        state.loader = false;
+        state.successMessage = payload.message;
+        const index = state.categories.findIndex(
+          (cat) => cat._id === payload.category._id
+        );
+        if (index !== -1) {
+          state.categories[index] = payload.category;
+        }
+      })
+
+      // deleteCategory
+      .addCase(deleteCategory.fulfilled, (state, action) => {
+        state.categories = state.categories.filter(
+          (cat) => cat._id !== action.meta.arg
+        );
+        state.successMessage = action.payload.message;
+      })
+      .addCase(deleteCategory.rejected, (state, action) => {
+        state.errorMessage = action.payload;
       });
   },
 });
