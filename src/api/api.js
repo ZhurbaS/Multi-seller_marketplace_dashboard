@@ -4,7 +4,7 @@ const local = import.meta.env.VITE_LOCAL;
 const production = import.meta.env.VITE_PRODUCTION;
 
 let api_url = "";
-let mode = import.meta.env.VITE_SELLER_COMMISSION;
+let mode = import.meta.env.VITE_MODE;
 
 if (mode === "pro") {
   api_url = production;
