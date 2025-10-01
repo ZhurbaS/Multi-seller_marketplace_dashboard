@@ -71,7 +71,10 @@ const DiscountProducts = () => {
                   >
                     <img
                       className="w-[45px] h-[45px] "
-                      src={`http://localhost:5173/images/category/${d}.jpg`}
+                      src={`${
+                        import.meta.env.VITE_PRODUCTION_FRONT
+                      }/images/category/${d}.jpg`}
+                      // src={`http://localhost:5173/images/category/${d}.jpg`}
                       alt=""
                     />
                   </td>

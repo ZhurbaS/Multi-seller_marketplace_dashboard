@@ -8,4 +8,4 @@ export const overrideStyle = {
   alignItems: "center",
 };
 
-export const socket = io("http://localhost:5000");
+export const socket = io(import.meta.env.VITE_PRODUCTION);
