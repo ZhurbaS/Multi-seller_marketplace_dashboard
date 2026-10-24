@@ -125,7 +125,7 @@ export const PaymentSlice = createSlice({
       })
       .addCase(send_withdrawal_request.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.message;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(send_withdrawal_request.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -146,7 +146,7 @@ export const PaymentSlice = createSlice({
       })
       .addCase(confirm_payment_request.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.message;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(confirm_payment_request.fulfilled, (state, { payload }) => {
         const temp = state.pendingWithdrawals.filter(

@@ -198,7 +198,7 @@ export const sellerSlice = createSlice({
       })
       .addCase(active_stripe_connect_account.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.message;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(
         active_stripe_connect_account.fulfilled,

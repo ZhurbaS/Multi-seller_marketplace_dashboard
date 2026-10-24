@@ -5,16 +5,46 @@ import Pagination from "../Pagination";
 import { FaEdit, FaEye } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
-import { get_products } from "../../store/Reducers/productSlice";
+import {
+  get_products,
+  delete_product,
+  messageClear,
+} from "../../store/Reducers/productSlice";
 import { RiImageEditLine } from "react-icons/ri";
+import toast from "react-hot-toast";
 
 const Products = () => {
   const dispatch = useDispatch();
-  const { products, totalProduct } = useSelector((state) => state.product);
+  const { products, totalProduct, successMessage, errorMessage } = useSelector(
+    (state) => state.product
+  );
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
   const [perPage, setPerPage] = useState(5);
+  // Товар, для якого відкрито вікно підтвердження видалення
+  const [productToDelete, setProductToDelete] = useState(null);
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch(messageClear());
+      setProductToDelete(null);
+      // Оновлюємо сторінку списку, щоб підтягнути наступний товар замість видаленого
+      dispatch(
+        get_products({
+          perPage: parseInt(perPage),
+          page: parseInt(currentPage),
+          searchValue,
+        })
+      );
+    }
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
+      setProductToDelete(null);
+    }
+  }, [successMessage, errorMessage]);
 
   useEffect(() => {
     const obj = {
@@ -156,9 +186,14 @@ const Products = () => {
                       >
                         <FaEye />
                       </a>
-                      <Link className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50  ">
+                      <button
+                        type="button"
+                        title="Видалити товар"
+                        onClick={() => setProductToDelete(product)}
+                        className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50  "
+                      >
                         <FaTrash />
-                      </Link>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -173,13 +208,54 @@ const Products = () => {
             <Pagination
               pageNumber={currentPage}
               setPageNumber={setCurrentPage}
-              totalItem={50}
+              totalItem={totalProduct}
               perPage={perPage}
               showItem={3}
             />
           </div>
         )}
       </div>
+
+      {productToDelete && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-4"
+          onClick={() => setProductToDelete(null)}
+        >
+          <div
+            className="w-full max-w-[420px] p-5 bg-[#6a5fdf] rounded-md text-[#d0d2d6] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-2">Видалити товар?</h2>
+            <p className="text-sm mb-1">
+              Ви збираєтесь назавжди видалити товар:
+            </p>
+            <p className="text-sm font-semibold mb-3 break-words">
+              {productToDelete.name}
+            </p>
+            <p className="text-xs mb-4">
+              Будуть видалені фото, відгуки та згадки в кошиках і списках
+              бажань. Історія вже оформлених замовлень збережеться. Цю дію не
+              можна скасувати.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setProductToDelete(null)}
+                className="bg-slate-700 text-white rounded-md px-4 py-1 text-sm"
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                onClick={() => dispatch(delete_product(productToDelete._id))}
+                className="bg-red-500 hover:shadow-lg hover:shadow-red-500/50 text-white rounded-md px-4 py-1 text-sm"
+              >
+                Видалити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

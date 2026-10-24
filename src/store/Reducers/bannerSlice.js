@@ -76,7 +76,7 @@ export const bannerSlice = createSlice({
       })
       .addCase(add_banner.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(add_banner.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -92,7 +92,7 @@ export const bannerSlice = createSlice({
       })
       .addCase(update_banner.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(update_banner.fulfilled, (state, { payload }) => {
         state.loader = false;

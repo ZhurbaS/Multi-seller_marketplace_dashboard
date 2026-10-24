@@ -38,9 +38,7 @@ const Header = ({ showSidebar, setShowSidebar }) => {
               {userInfo.role === "admin" ? (
                 <img
                   className="w-[45px] h-[45px] rounded-full overflow-hidden"
-                  src={`${
-                    import.meta.env.VITE_PRODUCTION_FRONT
-                  }/images/adminNEW.jpg`}
+                  src={`/images/adminNEW.jpg`}
                   alt=""
                 />
               ) : (

@@ -130,6 +130,23 @@ export const product_image_update = createAsyncThunk(
   }
 );
 
+export const delete_product = createAsyncThunk(
+  "product/delete_product",
+  async (productId, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.delete(`/product-delete/${productId}`, {
+        withCredentials: true,
+      });
+      return fulfillWithValue(data);
+    } catch (error) {
+      const message =
+        error?.response?.data?.error || "⛔ Не вдалося видалити товар";
+
+      return rejectWithValue({ error: message });
+    }
+  }
+);
+
 export const productSlice = createSlice({
   name: "product",
 
@@ -155,7 +172,7 @@ export const productSlice = createSlice({
       })
       .addCase(add_product.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || "⛔ Не вдалося додати товар";
       })
       .addCase(add_product.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -174,7 +191,7 @@ export const productSlice = createSlice({
       })
       .addCase(update_product.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || "⛔ Не вдалося оновити товар";
       })
       .addCase(update_product.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -183,6 +200,14 @@ export const productSlice = createSlice({
       })
       .addCase(product_image_update.fulfilled, (state, { payload }) => {
         state.product = payload.product;
+        state.successMessage = payload.message;
+      })
+      .addCase(delete_product.rejected, (state, { payload }) => {
+        state.errorMessage = payload?.error || "⛔ Не вдалося видалити товар";
+      })
+      .addCase(delete_product.fulfilled, (state, { payload }) => {
+        state.products = state.products.filter((p) => p._id !== payload.productId);
+        state.totalProduct = Math.max(0, state.totalProduct - 1);
         state.successMessage = payload.message;
       });
   },

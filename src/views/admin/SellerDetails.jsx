@@ -51,9 +51,7 @@ const SellerDetails = () => {
               {seller?.image ? (
                 <img
                   className="w-full"
-                  src={`${
-                    import.meta.env.VITE_PRODUCTION_FRONT
-                  }/images/demoNEW2.png`}
+                  src={`/images/demoNEW2.png`}
                   alt=""
                 />
               ) : (

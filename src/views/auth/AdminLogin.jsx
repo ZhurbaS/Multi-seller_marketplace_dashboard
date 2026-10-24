@@ -63,9 +63,7 @@ const AdminLogin = () => {
             <div className="w-[180px] h-[50px]">
               <img
                 className="w-full h-full"
-                src={`${
-                  import.meta.env.VITE_PRODUCTION_FRONT
-                }/images/logoTS.png`}
+                src={`/images/logoTS.png`}
                 alt="image"
               />
             </div>

@@ -144,7 +144,7 @@ export const orderSlice = createSlice({
         state.order = payload.order;
       })
       .addCase(admin_order_status_update.rejected, (state, { payload }) => {
-        state.errorMessage = payload.message;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(admin_order_status_update.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
@@ -157,7 +157,7 @@ export const orderSlice = createSlice({
         state.order = payload.order;
       })
       .addCase(seller_order_status_update.rejected, (state, { payload }) => {
-        state.errorMessage = payload.message;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(seller_order_status_update.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
