@@ -153,7 +153,7 @@ export const change_password = createAsyncThunk(
       return fulfillWithValue(data.message);
     } catch (error) {
       // console.log(error.response.data);
-      return rejectWithValue(error.response.data.message);
+      return rejectWithValue(error?.response?.data?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером");
     }
   }
 );
@@ -188,7 +188,7 @@ export const authSlice = createSlice({
       })
       .addCase(admin_login.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(admin_login.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -201,7 +201,7 @@ export const authSlice = createSlice({
       })
       .addCase(seller_login.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(seller_login.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -214,7 +214,7 @@ export const authSlice = createSlice({
       })
       .addCase(seller_register.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(seller_register.fulfilled, (state, { payload }) => {
         state.loader = false;

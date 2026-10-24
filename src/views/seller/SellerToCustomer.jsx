@@ -115,9 +115,7 @@ const SellerToCustomer = () => {
                   <div className="relative">
                     <img
                       className="w-[38px] h-[38px] border-white border-2 max-w-[38px] p-[2px] rounded-full"
-                      src={`${
-                        import.meta.env.VITE_PRODUCTION_FRONT
-                      }/images/user.png`}
+                      src={`/images/user.png`}
                       // src="http://localhost:5001/images/user.png"
                       alt=""
                     />
@@ -140,9 +138,7 @@ const SellerToCustomer = () => {
                   <div className="relative">
                     <img
                       className="w-[45px] h-[45px] border-green-500 border-2 max-w-[45px] p-[2px] rounded-full"
-                      src={`${
-                        import.meta.env.VITE_PRODUCTION_FRONT
-                      }/images/user.png`}
+                      src={`/images/user.png`}
                       // src="http://localhost:5001/images/user.png"
                       alt=""
                     />
@@ -178,9 +174,7 @@ const SellerToCustomer = () => {
                             <div>
                               <img
                                 className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src={`${
-                                  import.meta.env.VITE_PRODUCTION_FRONT
-                                }/images/user.png`}
+                                src={`/images/user.png`}
                                 // src="http://localhost:5001/images/user.png"
                                 alt=""
                               />
@@ -205,9 +199,7 @@ const SellerToCustomer = () => {
                             <div>
                               <img
                                 className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src={`${
-                                  import.meta.env.VITE_PRODUCTION_FRONT
-                                }/images/best-seller.jpg`}
+                                src={`/images/best-seller.jpg`}
                                 // src="http://localhost:5001/images/best-seller.jpg"
                                 alt=""
                               />

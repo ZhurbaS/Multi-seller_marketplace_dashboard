@@ -205,9 +205,7 @@ const ChatSeller = () => {
                             <div>
                               <img
                                 className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src={`${
-                                  import.meta.env.VITE_PRODUCTION_FRONT
-                                }/images/adminNEW.jpg`}
+                                src={`/images/adminNEW.jpg`}
                                 alt=""
                               />
                             </div>

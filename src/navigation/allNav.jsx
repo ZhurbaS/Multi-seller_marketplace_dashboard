@@ -12,6 +12,7 @@ import { MdOutlinePayments } from "react-icons/md";
 import { IoMdChatboxes } from "react-icons/io";
 import { RiChatSettingsFill } from "react-icons/ri";
 import { CgProfile } from "react-icons/cg";
+import { MdRateReview } from "react-icons/md";
 
 export const allNav = [
   {
@@ -69,6 +70,13 @@ export const allNav = [
     icon: <IoIosChatbubbles />,
     role: "admin",
     path: "/admin/dashboard/chat-sellers",
+  },
+  {
+    id: 18,
+    title: "Відгуки",
+    icon: <MdRateReview />,
+    role: "admin",
+    path: "/admin/dashboard/reviews",
   },
   {
     id: 9,

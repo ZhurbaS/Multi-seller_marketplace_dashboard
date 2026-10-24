@@ -60,6 +60,24 @@ const AddProduct = () => {
     }
   };
 
+  const [specifications, setSpecifications] = useState([
+    { key: "", value: "" },
+  ]);
+
+  const specChange = (index, field, value) => {
+    const updated = [...specifications];
+    updated[index] = { ...updated[index], [field]: value };
+    setSpecifications(updated);
+  };
+
+  const addSpecRow = () => {
+    setSpecifications([...specifications, { key: "", value: "" }]);
+  };
+
+  const removeSpecRow = (index) => {
+    setSpecifications(specifications.filter((_, i) => i !== index));
+  };
+
   const [images, setImages] = useState([]);
   const [imageShow, setImageShow] = useState([]);
 
@@ -108,6 +126,12 @@ const AddProduct = () => {
     formData.append("brand", state.brand);
     formData.append("shopName", "TechScout");
     formData.append("category", category);
+    formData.append(
+      "specifications",
+      JSON.stringify(
+        specifications.filter((s) => s.key.trim() && s.value.trim())
+      )
+    );
 
     for (let i = 0; i < images.length; i++) {
       formData.append("images", images[i]);
@@ -135,6 +159,7 @@ const AddProduct = () => {
       setImageShow([]);
       setImages([]);
       setCategory();
+      setSpecifications([{ key: "", value: "" }]);
     }
     if (errorMessage) {
       toast.error(errorMessage);
@@ -199,7 +224,7 @@ const AddProduct = () => {
                   placeholder="--обрати категорію--"
                 />
                 <div
-                  className={`absolute top-[101%] origin-top transition-transform duration-200 transform bg-[#475569] w-full ${
+                  className={`absolute top-[101%] z-20 origin-top transition-transform duration-200 transform bg-[#475569] w-full ${
                     cateShow ? "scale-100" : "scale-0"
                   }`}
                 >
@@ -213,7 +238,7 @@ const AddProduct = () => {
                     />
                   </div>
                   <div className="pt-14"></div>
-                  <div className="flex justify-start items-start flex-col h-[200px] scrollbar-hide">
+                  <div className="flex justify-start items-start flex-col h-[200px] overflow-y-auto scrollbar-hide">
                     {allCategory.map((c, i) => (
                       <span
                         key={c._id}
@@ -286,6 +311,40 @@ const AddProduct = () => {
                 cols="10"
                 rows="4"
               ></textarea>
+            </div>
+            <div className="flex flex-col w-full gap-2 mb-5">
+              <label className="text-[#d0d2d6]">Характеристики</label>
+              {specifications.map((spec, i) => (
+                <div className="flex gap-3 items-center" key={i}>
+                  <input
+                    className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6] w-full"
+                    value={spec.key}
+                    onChange={(e) => specChange(i, "key", e.target.value)}
+                    type="text"
+                    placeholder="Назва (напр. Екран)"
+                  />
+                  <input
+                    className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6] w-full"
+                    value={spec.value}
+                    onChange={(e) => specChange(i, "value", e.target.value)}
+                    type="text"
+                    placeholder="Значення (напр. 15.6″)"
+                  />
+                  <span
+                    onClick={() => removeSpecRow(i)}
+                    className="p-2 cursor-pointer bg-slate-700 hover:shadow-lg hover:shadow-slate-400/50 text-white rounded-full"
+                  >
+                    <IoMdCloseCircle />
+                  </span>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addSpecRow}
+                className="self-start bg-slate-700 hover:shadow-lg hover:shadow-slate-400/50 text-white rounded-md px-4 py-1 text-sm mt-1"
+              >
+                + Додати характеристику
+              </button>
             </div>
             <div className="grid lg:grid-cols-4 grid-cols-1 md:grid-cols-3 sm:grid-cols-2 sm:gap-4 md:gap-4 gap-3 w-fulltext-[#d0d2d6] mb-4">
               {imageShow.map((img, i) => (

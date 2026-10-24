@@ -114,7 +114,7 @@ export const categorySlice = createSlice({
       })
       .addCase(categoryAdd.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(categoryAdd.fulfilled, (state, { payload }) => {
         state.loader = false;
@@ -128,7 +128,7 @@ export const categorySlice = createSlice({
 
       .addCase(updateCategory.rejected, (state, { payload }) => {
         state.loader = false;
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || payload?.message || "⛔ Сталася помилка. Перевірте з'єднання з сервером";
       })
       .addCase(updateCategory.fulfilled, (state, { payload }) => {
         state.loader = false;

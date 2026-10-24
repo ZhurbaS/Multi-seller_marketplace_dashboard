@@ -208,7 +208,7 @@ export const chatSlice = createSlice({
 
         state.customers = tempFriends;
         state.messages = [...state.messages, payload.message];
-        state.successMessage = "Message sent successfully";
+        state.successMessage = "Повідомлення надіслано";
       })
       .addCase(get_sellers.fulfilled, (state, { payload }) => {
         state.sellers = payload.sellers;
@@ -218,7 +218,7 @@ export const chatSlice = createSlice({
           ...state.seller_admin_message,
           payload.message,
         ];
-        state.successMessage = "Message sent successfully";
+        state.successMessage = "Повідомлення надіслано";
       })
       .addCase(get_admin_message.fulfilled, (state, { payload }) => {
         state.seller_admin_message = payload.messages;
