@@ -147,9 +147,15 @@ const Products = () => {
                         <RiImageEditLine />
                       </Link>
 
-                      <Link className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  ">
+                      <a
+                        href={`${import.meta.env.VITE_PRODUCTION_FRONT}/product/details/${product.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Переглянути на сайті"
+                        className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  "
+                      >
                         <FaEye />
-                      </Link>
+                      </a>
                       <Link className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50  ">
                         <FaTrash />
                       </Link>
