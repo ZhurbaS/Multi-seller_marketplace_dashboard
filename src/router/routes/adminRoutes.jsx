@@ -10,6 +10,12 @@ const SellerDetails = lazy(() => import("../../views/admin/SellerDetails"));
 const ChatSeller = lazy(() => import("../../views/admin/ChatSeller"));
 const OrderDetails = lazy(() => import("../../views/admin/OrderDetails"));
 const ReviewModeration = lazy(() => import("../../views/admin/ReviewModeration"));
+const StoreDiscounts = lazy(() => import("../../views/admin/StoreDiscounts"));
+const Commission = lazy(() => import("../../views/admin/Commission"));
+const Company = lazy(() => import("../../views/admin/Company"));
+const Coupons = lazy(() => import("../../views/admin/Coupons"));
+const Returns = lazy(() => import("../../views/admin/Returns"));
+const ReturnsSettings = lazy(() => import("../../views/admin/ReturnsSettings"));
 
 export const adminRoutes = [
   {
@@ -70,6 +76,36 @@ export const adminRoutes = [
   {
     path: "admin/dashboard/reviews",
     element: <ReviewModeration />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/discounts",
+    element: <StoreDiscounts />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/commission",
+    element: <Commission />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/coupons",
+    element: <Coupons />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/returns",
+    element: <Returns />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/returns-settings",
+    element: <ReturnsSettings />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/company",
+    element: <Company />,
     role: "admin",
   },
 ];

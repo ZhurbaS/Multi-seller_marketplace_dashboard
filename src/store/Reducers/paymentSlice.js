@@ -103,6 +103,7 @@ export const PaymentSlice = createSlice({
     withdrawalAmount: 0,
     pendingAmount: 0,
     availableAmount: 0,
+    holdAmount: 0,
   },
   reducers: {
     messageClear: (state, _) => {
@@ -119,6 +120,7 @@ export const PaymentSlice = createSlice({
         state.withdrawalAmount = payload.withdrawalAmount;
         state.pendingAmount = payload.pendingAmount;
         state.availableAmount = payload.availableAmount;
+        state.holdAmount = payload.holdAmount || 0;
       })
       .addCase(send_withdrawal_request.pending, (state, { payload }) => {
         state.loader = true;

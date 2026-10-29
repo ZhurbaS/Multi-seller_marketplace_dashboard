@@ -13,6 +13,8 @@ import { IoMdChatboxes } from "react-icons/io";
 import { RiChatSettingsFill } from "react-icons/ri";
 import { CgProfile } from "react-icons/cg";
 import { MdRateReview } from "react-icons/md";
+import { MdAssignmentReturn } from "react-icons/md";
+import { RiCouponLine } from "react-icons/ri";
 
 export const allNav = [
   {
@@ -79,6 +81,48 @@ export const allNav = [
     path: "/admin/dashboard/reviews",
   },
   {
+    id: 22,
+    title: "Реквізити для рахунків",
+    icon: <MdPayment />,
+    role: "admin",
+    path: "/admin/dashboard/company",
+  },
+  {
+    id: 19,
+    title: "Знижки магазину",
+    icon: <TbShoppingCartDiscount />,
+    role: "admin",
+    path: "/admin/dashboard/discounts",
+  },
+  {
+    id: 20,
+    title: "Комісії і виплати",
+    icon: <MdPayment />,
+    role: "admin",
+    path: "/admin/dashboard/commission",
+  },
+  {
+    id: 18,
+    title: "Купони",
+    icon: <RiCouponLine />,
+    role: "admin",
+    path: "/admin/dashboard/coupons",
+  },
+  {
+    id: 19,
+    title: "Повернення",
+    icon: <MdAssignmentReturn />,
+    role: "admin",
+    path: "/admin/dashboard/returns",
+  },
+  {
+    id: 20,
+    title: "Умови повернення",
+    icon: <MdAssignmentReturn />,
+    role: "admin",
+    path: "/admin/dashboard/returns-settings",
+  },
+  {
     id: 9,
     title: "Панель керування",
     icon: <AiOutlineDashboard />,
@@ -119,6 +163,13 @@ export const allNav = [
     icon: <MdOutlinePayments />,
     role: "seller",
     path: "/seller/dashboard/payments",
+  },
+  {
+    id: 21,
+    title: "Повернення",
+    icon: <MdAssignmentReturn />,
+    role: "seller",
+    path: "/seller/dashboard/returns",
   },
   {
     id: 15,

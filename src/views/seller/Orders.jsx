@@ -6,6 +6,7 @@ import { FaEdit, FaEye } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { get_seller_orders } from "../../store/Reducers/orderSlice";
+import { payLabel, deliveryLabel } from "../../utils/statusLabels";
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -87,13 +88,13 @@ const Orders = () => {
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    {d.payment_status}
+                    {payLabel(d.payment_status)}
                   </td>
                   <td
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    {d.delivery_status}
+                    {deliveryLabel(d.delivery_status)}
                   </td>
 
                   <td

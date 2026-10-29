@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { get_seller_dashboard_data } from "../../store/Reducers/dashboardSlice";
 import moment from "moment/moment";
 import customerImg from "../../assets/demo.jpg";
+import { payLabel, deliveryLabel } from "../../utils/statusLabels";
 
 const SellerDashboard = () => {
   const dispatch = useDispatch();
@@ -273,13 +274,13 @@ const SellerDashboard = () => {
                     scope="row"
                     className="py-3 px-4 font-medium whitespace-nowrap"
                   >
-                    {d.payment_status}
+                    {payLabel(d.payment_status)}
                   </td>
                   <td
                     scope="row"
                     className="py-3 px-4 font-medium whitespace-nowrap"
                   >
-                    {d.delivery_status}
+                    {deliveryLabel(d.delivery_status)}
                   </td>
                   <td
                     scope="row"

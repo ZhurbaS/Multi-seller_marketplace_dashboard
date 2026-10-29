@@ -30,6 +30,7 @@ const Payment = () => {
     pendingAmount,
     withdrawalAmount,
     availableAmount,
+    holdAmount,
     successWithdrawals,
     pendingWithdrawals,
   } = useSelector((state) => state.payment);
@@ -142,6 +143,13 @@ const Payment = () => {
           </div>
         </div>
       </div>
+
+      {holdAmount > 0 && (
+        <p className="mb-5 text-sm text-[#d0d2d6]">
+          На утриманні: ₴{holdAmount} — кошти за замовленнями, які ще не доставлені
+          або у терміні повернення. Вони стануть доступними автоматично.
+        </p>
+      )}
 
       <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-2 pb-4">
         <div className="bg-[#6a5fdf] text-[#d0d2d6] rounded-md p-5">

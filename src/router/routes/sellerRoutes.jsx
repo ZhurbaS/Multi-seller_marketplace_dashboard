@@ -20,6 +20,7 @@ const OrderDetails = lazy(() => import("../../views/seller/OrderDetails"));
 const Pending = lazy(() => import("./../../views/Pending"));
 const Deactive = lazy(() => import("./../../views/Deactive"));
 const AddBanner = lazy(() => import("../../views/seller/AddBanner"));
+const SellerReturns = lazy(() => import("../../views/seller/Returns"));
 
 export const sellerRoutes = [
   {
@@ -107,6 +108,12 @@ export const sellerRoutes = [
   {
     path: "/seller/dashboard/add-banner/:productId",
     element: <AddBanner />,
+    role: "seller",
+    visibility: ["active"],
+  },
+  {
+    path: "/seller/dashboard/returns",
+    element: <SellerReturns />,
     role: "seller",
     visibility: ["active"],
   },

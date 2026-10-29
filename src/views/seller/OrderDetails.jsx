@@ -7,6 +7,7 @@ import {
   seller_order_status_update,
 } from "../../store/Reducers/orderSlice";
 import toast from "react-hot-toast";
+import { payLabel } from "../../utils/statusLabels";
 
 const OrderDetails = () => {
   const dispatch = useDispatch();
@@ -82,9 +83,15 @@ const OrderDetails = () => {
                 </div>
                 <div className="flex justify-start items-center gap-3">
                   <h2>Статус оплати: </h2>
-                  <span className="text-base">{order.payment_status}</span>
+                  <span className="text-base">{payLabel(order.payment_status)}</span>
                 </div>
                 <span>Ціна: ₴{order.price}</span>
+                {typeof order.commission === "number" && (
+                  <>
+                    <span>Комісія магазину: ₴{order.commission}</span>
+                    <span className="font-bold">До виплати вам: ₴{order.payout}</span>
+                  </>
+                )}
 
                 {order?.products?.map((p, i) => (
                   <div

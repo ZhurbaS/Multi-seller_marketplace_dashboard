@@ -8,6 +8,11 @@ import { add_product, messageClear } from "../../store/Reducers/productSlice";
 import { overrideStyle } from "../../utils/utils";
 import toast from "react-hot-toast";
 import { PropagateLoader } from "react-spinners";
+import CommissionHint from "../../components/CommissionHint";
+import SaleRulesFields, {
+  defaultRules,
+  appendRulesToFormData,
+} from "../../components/SaleRulesFields";
 
 const AddProduct = () => {
   const dispatch = useDispatch();
@@ -59,6 +64,8 @@ const AddProduct = () => {
       setAllCategory(categories);
     }
   };
+
+  const [rules, setRules] = useState(defaultRules);
 
   const [specifications, setSpecifications] = useState([
     { key: "", value: "" },
@@ -133,6 +140,8 @@ const AddProduct = () => {
       )
     );
 
+    appendRulesToFormData(formData, rules);
+
     for (let i = 0; i < images.length; i++) {
       formData.append("images", images[i]);
     }
@@ -160,6 +169,7 @@ const AddProduct = () => {
       setImages([]);
       setCategory();
       setSpecifications([{ key: "", value: "" }]);
+      setRules(defaultRules);
     }
     if (errorMessage) {
       toast.error(errorMessage);
@@ -297,6 +307,11 @@ const AddProduct = () => {
                 />
               </div>
             </div>
+            <CommissionHint
+              price={state.price}
+              discount={state.discount}
+              categoryName={category}
+            />
             <div className="flex flex-col w-full gap-1 mb-5">
               <label htmlFor="description" className="text-[#d0d2d6]">
                 Опис
@@ -346,6 +361,7 @@ const AddProduct = () => {
                 + Додати характеристику
               </button>
             </div>
+            <SaleRulesFields rules={rules} onChange={setRules} />
             <div className="grid lg:grid-cols-4 grid-cols-1 md:grid-cols-3 sm:grid-cols-2 sm:gap-4 md:gap-4 gap-3 w-fulltext-[#d0d2d6] mb-4">
               {imageShow.map((img, i) => (
                 <div className="h-[180px] relative" key={i}>

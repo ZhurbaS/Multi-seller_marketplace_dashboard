@@ -156,7 +156,17 @@ const Products = () => {
                     scope="row"
                     className="py-1 px-4 font-medium whitespace-nowrap"
                   >
-                    {product.stock}
+                    {product.stock <= 0 ? (
+                      <span className="px-2 py-[2px] rounded bg-red-500 text-white text-xs">
+                        Немає в наявності
+                      </span>
+                    ) : product.stock <= 3 ? (
+                      <span className="px-2 py-[2px] rounded bg-yellow-500 text-black text-xs">
+                        Закінчується: {product.stock}
+                      </span>
+                    ) : (
+                      product.stock
+                    )}
                   </td>
                   <td
                     scope="row"

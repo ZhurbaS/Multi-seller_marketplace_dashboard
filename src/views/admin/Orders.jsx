@@ -5,6 +5,7 @@ import Pagination from "../Pagination";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { get_admin_orders } from "../../store/Reducers/orderSlice";
+import { payLabel, deliveryLabel } from "../../utils/statusLabels";
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -72,10 +73,15 @@ const Orders = () => {
                   </div>
                   <div className="py-3 w-[13%] font-medium">₴{o.price}</div>
                   <div className="py-3 w-[18%] font-medium">
-                    {o.payment_status}
+                    {payLabel(o.payment_status)}
+                    {o.invoice?.number && (
+                      <div className="text-xs opacity-80">
+                        рахунок {o.invoice.number}: {{ awaiting: "не надіслано", sent: "надіслано", paid: "оплачено", expired: "строк минув", cancelled: "скасовано" }[o.invoice.status] || ""}
+                      </div>
+                    )}
                   </div>
                   <div className="py-3 w-[18%] font-medium">
-                    {o.delivery_status}
+                    {deliveryLabel(o.delivery_status)}
                   </div>
                   <div className="py-3 w-[18%] font-medium">
                     <Link
@@ -112,10 +118,10 @@ const Orders = () => {
                         ₴{so.price}
                       </div>
                       <div className="py-3 w-[18%] font-medium">
-                        {so.payment_status}
+                        {payLabel(so.payment_status)}
                       </div>
                       <div className="py-3 w-[18%] font-medium">
-                        {so.delivery_status}
+                        {deliveryLabel(so.delivery_status)}
                       </div>
                     </div>
                   ))}

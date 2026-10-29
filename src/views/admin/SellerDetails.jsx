@@ -6,6 +6,10 @@ import {
   seller_status_update,
   messageClear,
 } from "./../../store/Reducers/sellerSlice";
+import {
+  update_seller_commission,
+  messageClear as settingsMessageClear,
+} from "../../store/Reducers/settingsSlice";
 import toast from "react-hot-toast";
 
 const SellerDetails = () => {
@@ -35,9 +39,39 @@ const SellerDetails = () => {
     }
   }, [successMessage]);
 
+  // Індивідуальна комісія: порожньо — за категорією/типова, 0 — власний магазин
+  const [commission, setCommission] = useState("");
+  const { successMessage: settingsOk, errorMessage: settingsErr } = useSelector(
+    (state) => state.settings
+  );
+  const saveCommission = (value) => {
+    dispatch(
+      update_seller_commission({
+        sellerId,
+        percent: value === "" ? null : Number(value),
+      })
+    );
+  };
+
+  useEffect(() => {
+    if (settingsOk) {
+      toast.success(settingsOk);
+      dispatch(settingsMessageClear());
+    }
+    if (settingsErr) {
+      toast.error(settingsErr);
+      dispatch(settingsMessageClear());
+    }
+  }, [settingsOk, settingsErr, dispatch]);
+
   useEffect(() => {
     if (seller) {
       setStatus(seller.status);
+      setCommission(
+        typeof seller.commissionPercent === "number"
+          ? String(seller.commissionPercent)
+          : ""
+      );
     }
   }, [seller]);
 
@@ -144,6 +178,44 @@ const SellerDetails = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="mt-2 p-4 bg-[#9e97e9] rounded-md text-black max-w-[640px]">
+          <h2 className="font-bold pb-1">Комісія магазину для цього продавця</h2>
+          <p className="text-xs pb-3">
+            Порожньо — діє ставка категорії або типова. 0 — власний магазин (комісія
+            не нараховується). Змінюється лише для нових замовлень.
+          </p>
+          <div className="flex gap-3 items-center flex-wrap">
+            <input
+              type="number"
+              min="0"
+              max="50"
+              step="0.5"
+              placeholder="за категорією"
+              value={commission}
+              onChange={(e) => setCommission(e.target.value)}
+              className="px-3 py-2 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6] w-[160px]"
+            />
+            <span className="text-sm">%</span>
+            <button
+              type="button"
+              onClick={() => saveCommission(commission)}
+              className="bg-red-500 text-white rounded-md px-5 py-2 text-sm"
+            >
+              Зберегти
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCommission("0");
+                saveCommission("0");
+              }}
+              className="bg-blue-500 text-white rounded-md px-5 py-2 text-sm"
+            >
+              Власний магазин (0%)
+            </button>
+          </div>
         </div>
       </div>
     </div>

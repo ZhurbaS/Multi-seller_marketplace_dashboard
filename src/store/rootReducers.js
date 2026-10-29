@@ -8,6 +8,7 @@ import PaymentSlice from "./Reducers/paymentSlice";
 import productSlice from "./Reducers/productSlice";
 import sellerSlice from "./Reducers/sellerSlice";
 import reviewSlice from "./Reducers/reviewSlice";
+import settingsSlice from "./Reducers/settingsSlice";
 
 const rootReducer = {
   auth: authSlice,
@@ -20,6 +21,7 @@ const rootReducer = {
   dashboard: dashboardSlice,
   banner: bannerSlice,
   review: reviewSlice,
+  settings: settingsSlice,
 };
 
 export default rootReducer;

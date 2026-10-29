@@ -12,6 +12,12 @@ import {
 import { overrideStyle } from "../../utils/utils";
 import toast from "react-hot-toast";
 import { PropagateLoader } from "react-spinners";
+import CommissionHint from "../../components/CommissionHint";
+import SaleRulesFields, {
+  defaultRules,
+  rulesFromProduct,
+  rulesToPayload,
+} from "../../components/SaleRulesFields";
 
 const EditProduct = () => {
   const { productId } = useParams();
@@ -77,6 +83,8 @@ const EditProduct = () => {
     }
   };
 
+  const [rules, setRules] = useState(defaultRules);
+
   const [specifications, setSpecifications] = useState([
     { key: "", value: "" },
   ]);
@@ -137,6 +145,8 @@ const EditProduct = () => {
       setImageShow(product.images);
     }
 
+    setRules(rulesFromProduct(product));
+
     setSpecifications(
       Array.isArray(product.specifications) && product.specifications.length > 0
         ? product.specifications.map((s) => ({ key: s.key, value: s.value }))
@@ -187,6 +197,7 @@ const EditProduct = () => {
       specifications: specifications.filter(
         (s) => s.key.trim() && s.value.trim()
       ),
+      ...rulesToPayload(rules),
     };
     dispatch(update_product(obj));
   };
@@ -322,6 +333,11 @@ const EditProduct = () => {
                 />
               </div>
             </div>
+            <CommissionHint
+              price={state.price}
+              discount={state.discount}
+              categoryName={categories.find((c) => c._id === category)?.name}
+            />
             <div className="flex flex-col w-full gap-1 mb-5">
               <label htmlFor="description" className="text-[#d0d2d6]">
                 Опис
@@ -371,6 +387,7 @@ const EditProduct = () => {
                 + Додати характеристику
               </button>
             </div>
+            <SaleRulesFields rules={rules} onChange={setRules} />
             <div className="grid lg:grid-cols-4 grid-cols-1 md:grid-cols-3 sm:grid-cols-2 sm:gap-4 md:gap-4 gap-3 w-fulltext-[#d0d2d6] mb-4">
               {Array.isArray(imageShow) &&
                 imageShow.map((img, i) => (
