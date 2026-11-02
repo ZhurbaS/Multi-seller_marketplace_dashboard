@@ -1,4 +1,6 @@
-import js from '@eslint/js'
+git add -A
+git commit -m "Дашборд: купони, повернення, реквізити/рахунки, коментар і поштомат у замовленні"
+git pushimport js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'

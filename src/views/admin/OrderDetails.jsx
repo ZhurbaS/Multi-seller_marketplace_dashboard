@@ -140,6 +140,9 @@ const OrderDetails = () => {
                     </span>
                   </p>
                 </div>
+                {order.comment && (
+                  <p className="text-sm whitespace-pre-wrap">Коментар покупця: {order.comment}</p>
+                )}
                 <div className="flex justify-start items-center gap-3">
                   <h2>Статус оплати: </h2>
                   <span className="text-base">{payLabel(order.payment_status)}</span>
@@ -148,6 +151,7 @@ const OrderDetails = () => {
                   Доставка:{" "}
                   {{
                     nova_poshta_warehouse: "Нова пошта — у відділення",
+                    nova_poshta_postomat: "Нова пошта — у поштомат",
                     nova_poshta_courier: "Нова пошта — кур'єр",
                     ukrposhta: "Укрпошта",
                     pickup: "Самовивіз",

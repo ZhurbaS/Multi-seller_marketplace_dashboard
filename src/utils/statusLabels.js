@@ -16,6 +16,7 @@ export const deliveryLabel = (s) => DELIVERY_STATUS[s] || s || "—";
 
 export const DELIVERY_TYPE = {
   nova_poshta_warehouse: "Нова пошта — у відділення",
+  nova_poshta_postomat: "Нова пошта — у поштомат",
   nova_poshta_courier: "Нова пошта — кур'єр",
   ukrposhta: "Укрпошта",
   pickup: "Самовивіз",
