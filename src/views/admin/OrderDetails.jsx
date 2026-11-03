@@ -212,6 +212,7 @@ const OrderDetails = () => {
                       Виставлено: {new Date(order.invoice.issuedAt).toLocaleDateString("uk-UA")} · дійсний до:{" "}
                       {new Date(order.invoice.dueAt).toLocaleDateString("uk-UA")}
                       {order.invoice.sentTo ? ` · надіслано на ${order.invoice.sentTo}` : ""}
+                      {order.invoice.messageStatus ? ` · статус у месенджері: ${{ sent: "відправлено", delivered: "доставлено", read: "прочитано", failed: "не доставлено" }[order.invoice.messageStatus] || order.invoice.messageStatus}` : ""}
                     </div>
                     {order.invoice.channel && order.invoice.channel !== "email" && (
                       <div className="flex gap-2 items-center flex-wrap">

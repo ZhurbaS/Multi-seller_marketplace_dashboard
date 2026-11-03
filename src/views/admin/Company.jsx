@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../../api/api";
+import MessengersCard from "./MessengersCard";
 
 const inputCls =
   "px-3 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6] w-full";
@@ -125,6 +126,7 @@ const Company = () => {
           Зберегти реквізити
         </button>
       </form>
+      <MessengersCard />
     </div>
   );
 };

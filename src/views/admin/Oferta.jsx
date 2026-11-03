@@ -6,10 +6,20 @@ import api from "../../api/api";
 const inputCls =
   "px-3 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6] w-full";
 
+// Документи: slug збігається з бекендом (utiles/legalDocs.js)
+const DOCS = [
+  ["oferta", "Публічна оферта"],
+  ["delivery", "Доставка й оплата"],
+  ["returns", "Обмін і повернення"],
+  ["warranty", "Гарантія"],
+  ["privacy", "Конфіденційність"],
+  ["cookies", "Cookies"],
+];
+
 const VARIABLES = [
   ["{{date}}", "дата редакції (ставиться при публікації)"],
   ["{{seller_name}}, {{edrpou}}, {{address}}, {{email}}", "з «Реквізити для рахунків»"],
-  ["{{brand}}, {{domain}}, {{claims_email}}", "поля нижче"],
+  ["{{brand}}, {{domain}}, {{claims_email}}, {{hours_line}}", "поля нижче (спільні для всіх документів)"],
   ["{{vat_text}}, {{vat_status}}", "залежать від галочки «платник ПДВ» у реквізитах"],
   ["{{invoice_days}}", "строк дії рахунку з реквізитів"],
   ["{{card_days}}", "через скільки днів скасовується неоплачене замовлення"],
@@ -50,30 +60,64 @@ const Preview = ({ text }) => {
   );
 };
 
-// Публічна оферта: текст, поля, перегляд і вимикач показу покупцям
+// Юридичні документи: текст, спільні поля, перегляд і вимикач показу покупцям
 const Oferta = () => {
+  const [slug, setSlug] = useState("oferta");
+  const [statuses, setStatuses] = useState({});
   const [st, setSt] = useState(null);
   const [template, setTemplate] = useState("");
-  const [vars, setVars] = useState({ brand: "", domain: "", claimsEmail: "" });
+  const [vars, setVars] = useState({ brand: "", domain: "", claimsEmail: "", hours: "" });
   const [tab, setTab] = useState("edit");
   const [busy, setBusy] = useState(false);
+
+  const refreshStatuses = () =>
+    api
+      .get("/home/legal/status")
+      .then(({ data }) => setStatuses(data.docs || {}))
+      .catch(() => {});
 
   const apply = (data) => {
     setSt(data);
     setTemplate(data.template);
     setVars(data.vars);
+    refreshStatuses();
   };
 
   useEffect(() => {
+    setSt(null);
+    setTab("edit");
     api
-      .get("/admin/settings/legal/oferta")
+      .get(`/admin/settings/legal/${slug}`)
       .then(({ data }) => apply(data))
       .catch((e) => toast.error(e.response?.data?.error || "Не вдалося завантажити"));
-  }, []);
+  }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!st) return <div className="p-7 text-[#d0d2d6]">Завантаження…</div>;
+  const tabs = (
+    <div className="flex gap-2 flex-wrap">
+      {DOCS.map(([id, label]) => (
+        <button
+          key={id}
+          onClick={() => setSlug(id)}
+          className={`px-3 py-1 rounded-md text-sm ${slug === id ? "bg-slate-900 text-white" : "bg-[#5b51c9]"}`}
+        >
+          {label}
+          <span className={`ml-2 inline-block w-2 h-2 rounded-full ${statuses[id]?.published ? "bg-green-400" : "bg-slate-400"}`} title={statuses[id]?.published ? "показується покупцям" : "вимкнено"} />
+        </button>
+      ))}
+    </div>
+  );
 
-  const dirty = template !== st.template || ["brand", "domain", "claimsEmail"].some((k) => vars[k] !== st.vars[k]);
+  if (!st)
+    return (
+      <div className="px-2 lg:px-7 pt-5">
+        <div className="w-full p-4 bg-[#6a5fdf] rounded-md text-[#d0d2d6] max-w-[1000px] flex flex-col gap-4">
+          {tabs}
+          <div>Завантаження…</div>
+        </div>
+      </div>
+    );
+
+  const dirty = template !== st.template || ["brand", "domain", "claimsEmail", "hours"].some((k) => vars[k] !== st.vars[k]);
 
   const run = async (fn, okMsg) => {
     setBusy(true);
@@ -88,11 +132,11 @@ const Oferta = () => {
     }
   };
 
-  const save = () => run(() => api.put("/admin/settings/legal/oferta", { template, vars }));
-  const togglePublish = () => run(() => api.put("/admin/settings/legal/oferta/published", { published: !st.published }));
+  const save = () => run(() => api.put(`/admin/settings/legal/${slug}`, { template, vars }));
+  const togglePublish = () => run(() => api.put(`/admin/settings/legal/${slug}/published`, { published: !st.published }));
   const reset = () => {
-    if (!window.confirm("Повернути типовий текст оферти? Ваші правки в тексті буде втрачено (поля й реквізити не зміняться).")) return;
-    run(() => api.post("/admin/settings/legal/oferta/reset"));
+    if (!window.confirm("Повернути типовий текст цього документа? Ваші правки в тексті буде втрачено (поля й реквізити не зміняться).")) return;
+    run(() => api.post(`/admin/settings/legal/${slug}/reset`));
   };
 
   const setVar = (k) => (e) => setVars({ ...vars, [k]: e.target.value });
@@ -101,7 +145,9 @@ const Oferta = () => {
   return (
     <div className="px-2 lg:px-7 pt-5">
       <div className="w-full p-4 bg-[#6a5fdf] rounded-md text-[#d0d2d6] flex flex-col gap-4 max-w-[1000px]">
-        <h1 className="text-xl font-semibold">Публічна оферта</h1>
+        <h1 className="text-xl font-semibold">Юридичні документи</h1>
+        {tabs}
+        <h2 className="text-lg font-semibold">{st.title}</h2>
 
         <div className="flex items-center justify-between gap-4 flex-wrap p-3 rounded-md bg-[#5b51c9]">
           <div className="text-sm">
@@ -111,8 +157,8 @@ const Oferta = () => {
             </div>
             <div className="opacity-80">
               {st.published
-                ? "Покупці бачать сторінку /oferta і посилання у футері; на оформленні замовлення з'являється обов'язкова галочка згоди."
-                : "Поки вимкнено: сторінки /oferta, посилання у футері й галочки на оформленні немає."}
+                ? `Покупці бачать сторінку ${st.path} і посилання у футері${["oferta", "privacy"].includes(slug) ? "; при оформленні та реєстрації з'являється обов'язкова галочка згоди" : ""}.`
+                : `Поки вимкнено: сторінки ${st.path} і посилання у футері немає${["oferta", "privacy"].includes(slug) ? "; галочка згоди не вимагається" : ""}.`}
             </div>
             {st.published && st.stale && (
               <div className="text-yellow-200 mt-1">
@@ -124,7 +170,7 @@ const Oferta = () => {
             {st.published && st.stale && (
               <button
                 disabled={busy || dirty}
-                onClick={() => run(() => api.put("/admin/settings/legal/oferta/published", { published: true }))}
+                onClick={() => run(() => api.put(`/admin/settings/legal/${slug}/published`, { published: true }))}
                 className="px-4 py-2 rounded-md bg-yellow-500 text-black disabled:opacity-50"
               >
                 Опублікувати нову редакцію
@@ -153,10 +199,11 @@ const Oferta = () => {
 
         <p className="text-xs opacity-80">
           Текст підготовлено без участі юриста. <b>Перед увімкненням покажіть його юристу</b> і за потреби відредагуйте. Покупці бачать
-          і приймають лише ту редакцію, яку ви опублікували; кожне замовлення зберігає номер редакції та підпис (хеш) тексту, прийнятого покупцем.
+          і приймають лише ту редакцію, яку ви опублікували; замовлення й акаунти зберігають номер редакції та підпис (хеш) прийнятого тексту.
+          Поля «бренд, домен, e-mail, години» спільні для всіх документів.
         </p>
 
-        <div className="grid md:grid-cols-3 gap-3">
+        <div className="grid md:grid-cols-4 max-md:grid-cols-1 gap-3">
           <div>
             <label className="text-xs block pb-1">Торговельна марка (бренд)</label>
             <input className={inputCls} value={vars.brand} onChange={setVar("brand")} maxLength={80} />
@@ -164,6 +211,10 @@ const Oferta = () => {
           <div>
             <label className="text-xs block pb-1">Домен сайту</label>
             <input className={inputCls} value={vars.domain} onChange={setVar("domain")} maxLength={120} placeholder="example.ua" />
+          </div>
+          <div>
+            <label className="text-xs block pb-1">Години роботи (необов'язково)</label>
+            <input className={inputCls} value={vars.hours} onChange={setVar("hours")} maxLength={120} placeholder="Пн–Пт 9:00–18:00" />
           </div>
           <div>
             <label className="text-xs block pb-1">E-mail для претензій і запитів</label>

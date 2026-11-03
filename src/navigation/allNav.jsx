@@ -90,7 +90,7 @@ export const allNav = [
   },
   {
     id: 30,
-    title: "Публічна оферта",
+    title: "Юридичні документи",
     icon: <MdGavel />,
     role: "admin",
     path: "/admin/dashboard/oferta",
