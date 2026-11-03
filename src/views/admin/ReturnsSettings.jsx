@@ -26,7 +26,7 @@ const BuyerBlock = ({ title, v, set }) => (
       <input type="checkbox" checked={v.withdrawalAllowed} onChange={(e) => set({ ...v, withdrawalAllowed: e.target.checked })} />
       Дозволити відмову від товару («передумав»)
     </label>
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 items-end">
       <div>
         <label className="text-xs block pb-1">Строк відмови, днів після отримання</label>
         <input className={inputCls} type="number" min="0" value={v.withdrawalDays} onChange={(e) => set({ ...v, withdrawalDays: e.target.value })} />
@@ -44,7 +44,7 @@ const BuyerBlock = ({ title, v, set }) => (
       <input type="checkbox" checked={v.defectAllowed} onChange={(e) => set({ ...v, defectAllowed: e.target.checked })} />
       Дозволити повернення брака / невідповідного товару
     </label>
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 items-end">
       <div>
         <label className="text-xs block pb-1">Строк заяви про брак, днів після отримання</label>
         <input className={inputCls} type="number" min="0" value={v.defectDays} onChange={(e) => set({ ...v, defectDays: e.target.value })} />
