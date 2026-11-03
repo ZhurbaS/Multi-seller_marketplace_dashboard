@@ -183,6 +183,19 @@ const OrderDetails = () => {
                     {order.order_discount.amount})
                   </p>
                 )}
+                {order.shippingChangedAt && (
+                  <div className="mt-2 p-3 bg-amber-600/30 rounded-md text-sm">
+                    <div className="font-semibold">
+                      Покупець змінив отримувача/доставку · {new Date(order.shippingChangedAt).toLocaleString("uk-UA")}
+                    </div>
+                    {order.shippingChanges?.length > 0 && (
+                      <div className="opacity-90">
+                        Було: {recipientText(order.shippingChanges.at(-1).before) || `${order.shippingChanges.at(-1).before?.name}, ${order.shippingChanges.at(-1).before?.phone}`};{" "}
+                        {formatAddress(order.shippingChanges.at(-1).before)}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {order.invoice?.number && (
                   <div className="mt-2 p-3 bg-[#5b51cc] rounded-md text-sm flex flex-col gap-1">
                     <div className="font-semibold">
@@ -200,6 +213,28 @@ const OrderDetails = () => {
                       {new Date(order.invoice.dueAt).toLocaleDateString("uk-UA")}
                       {order.invoice.sentTo ? ` · надіслано на ${order.invoice.sentTo}` : ""}
                     </div>
+                    {order.invoice.channel && order.invoice.channel !== "email" && (
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <span>
+                          Покупець просить надіслати у {order.invoice.channel === "viber" ? "Viber" : "WhatsApp"}: {order.invoice.contact || "—"}
+                        </span>
+                        {order.invoice.contact && (
+                          <a
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1 rounded-md bg-[#475569]"
+                            href={
+                              order.invoice.channel === "viber"
+                                ? `viber://chat?number=${encodeURIComponent(String(order.invoice.contact).replace(/[^\d+]/g, ""))}`
+                                : `https://wa.me/${String(order.invoice.contact).replace(/\D/g, "")}`
+                            }
+                          >
+                            Відкрити чат
+                          </a>
+                        )}
+                        <span className="opacity-80">Завантажте PDF і надішліть вручну.</span>
+                      </div>
+                    )}
                     {order.invoice.sendError && order.invoice.status !== "paid" && (
                       <div className="text-yellow-200">{order.invoice.sendError}</div>
                     )}
