@@ -5,7 +5,7 @@ import Pagination from "../Pagination";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { get_admin_orders } from "../../store/Reducers/orderSlice";
-import { payLabel, deliveryLabel } from "../../utils/statusLabels";
+import { payLabel, deliveryLabel, orderNo } from "../../utils/statusLabels";
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -69,7 +69,8 @@ const Orders = () => {
               <div key={o._id} className="text-[#d0d2d6]">
                 <div className="flex justify-between items-start border-b border-slate-700">
                   <div className="py-3 w-[25%] font-medium whitespace-nowrap">
-                    #{o._id}
+                    {orderNo(o)}
+                    <div className="text-xs opacity-70 font-normal">{new Date(o.createdAt).toLocaleDateString("uk-UA")}</div>
                   </div>
                   <div className="py-3 w-[13%] font-medium">₴{o.price}</div>
                   <div className="py-3 w-[18%] font-medium">

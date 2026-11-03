@@ -41,3 +41,13 @@ export const recipientText = (si) => {
   if (!r?.other) return "";
   return `${r.lastName} ${r.firstName}${r.middleName ? ` ${r.middleName}` : ""}, ${r.phone}`;
 };
+
+// Короткий номер замовлення (старі замовлення без номера — останні 6 символів id)
+export const orderNo = (o) => `№${o?.orderNumber || String(o?._id || "").slice(-6).toUpperCase()}`;
+
+// Дата й час українською: «26 жовтня 2026, 14:35»
+export const formatDateTime = (v) => {
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("uk-UA", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};

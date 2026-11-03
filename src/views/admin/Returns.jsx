@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api/api";
+import { orderNo } from "../../utils/statusLabels";
 import { RETURN_STATUS, RETURN_REASON, PAYER, REFUND_STATUS, fmtDate } from "../../utils/returnLabels";
 
 const inputCls =
@@ -127,7 +128,7 @@ const Details = ({ id, onClose, onChanged }) => {
           <br />
           <b>Замовлення:</b>{" "}
           <Link className="underline" to={`/admin/dashboard/order/details/${r.orderId}`}>
-            #{String(r.orderId).slice(-8).toUpperCase()}
+            {orderNo({ orderNumber: r.orderNumber, _id: r.orderId })}
           </Link>{" "}
           · сплачено ₴{order?.price} ({order?.payment?.provider || order?.payment_method}) · вже повернено ₴
           {order?.refunded_total || 0}

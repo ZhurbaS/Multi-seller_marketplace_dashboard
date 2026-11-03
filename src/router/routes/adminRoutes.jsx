@@ -13,6 +13,7 @@ const ReviewModeration = lazy(() => import("../../views/admin/ReviewModeration")
 const StoreDiscounts = lazy(() => import("../../views/admin/StoreDiscounts"));
 const Commission = lazy(() => import("../../views/admin/Commission"));
 const Company = lazy(() => import("../../views/admin/Company"));
+const Oferta = lazy(() => import("../../views/admin/Oferta"));
 const Coupons = lazy(() => import("../../views/admin/Coupons"));
 const Returns = lazy(() => import("../../views/admin/Returns"));
 const ReturnsSettings = lazy(() => import("../../views/admin/ReturnsSettings"));
@@ -101,6 +102,11 @@ export const adminRoutes = [
   {
     path: "admin/dashboard/returns-settings",
     element: <ReturnsSettings />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/oferta",
+    element: <Oferta />,
     role: "admin",
   },
   {

@@ -15,6 +15,7 @@ import { CgProfile } from "react-icons/cg";
 import { MdRateReview } from "react-icons/md";
 import { MdAssignmentReturn } from "react-icons/md";
 import { RiCouponLine } from "react-icons/ri";
+import { MdGavel } from "react-icons/md";
 
 export const allNav = [
   {
@@ -86,6 +87,13 @@ export const allNav = [
     icon: <MdPayment />,
     role: "admin",
     path: "/admin/dashboard/company",
+  },
+  {
+    id: 30,
+    title: "Публічна оферта",
+    icon: <MdGavel />,
+    role: "admin",
+    path: "/admin/dashboard/oferta",
   },
   {
     id: 19,

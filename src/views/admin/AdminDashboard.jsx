@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { get_admin_dashboard_data } from "../../store/Reducers/dashboardSlice";
 import sellerImg from "../../assets/seller.png";
 import moment from "moment/moment";
-import { payLabel, deliveryLabel } from "../../utils/statusLabels";
+import { payLabel, deliveryLabel, orderNo } from "../../utils/statusLabels";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -261,7 +261,7 @@ const AdminDashboard = () => {
                     scope="row"
                     className="py-3 px-6 font-medium whitespace-nowrap"
                   >
-                    #{d._id}
+                    {orderNo(d)}
                   </td>
                   <td
                     scope="row"

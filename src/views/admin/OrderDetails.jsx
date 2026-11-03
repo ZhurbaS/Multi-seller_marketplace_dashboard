@@ -8,7 +8,7 @@ import {
   messageClear,
 } from "../../store/Reducers/orderSlice";
 import toast from "react-hot-toast";
-import { payLabel, deliveryLabel, formatAddress, recipientText } from "../../utils/statusLabels";
+import { orderNo, formatDateTime, payLabel, deliveryLabel, formatAddress, recipientText } from "../../utils/statusLabels";
 
 const OrderDetails = () => {
   const dispatch = useDispatch();
@@ -19,9 +19,11 @@ const OrderDetails = () => {
   );
   const [status, setStatus] = useState("");
   const [override, setOverride] = useState("default");
+  const [tracking, setTracking] = useState("");
 
   useEffect(() => {
     setStatus(order?.delivery_status);
+    setTracking(order?.trackingNumber || "");
     setOverride(order?.returnOverride || "default");
   }, [order]);
 
@@ -82,7 +84,7 @@ const OrderDetails = () => {
 
   const status_update = (e) => {
     dispatch(
-      admin_order_status_update({ orderId, info: { status: e.target.value } })
+      admin_order_status_update({ orderId, info: { status: e.target.value, trackingNumber: tracking } })
     );
     setStatus(e.target.value);
   };
@@ -121,8 +123,25 @@ const OrderDetails = () => {
         </div>
         <div className="p-4">
           <div className="flex gap-2 text-lg text-[#d0d2d6]">
-            <h2>#{order._id}</h2>
-            <span>{order.date}</span>
+            <h2>Замовлення {orderNo(order)}</h2>
+            <span>від {formatDateTime(order.createdAt)}</span>
+          </div>
+          <div className="flex gap-2 items-center my-2 text-[#d0d2d6]">
+            <span className="text-sm">ТТН перевізника:</span>
+            <input
+              value={tracking}
+              onChange={(e) => setTracking(e.target.value)}
+              maxLength={40}
+              placeholder="Номер накладної"
+              className="px-3 py-1 bg-[#475569] border border-slate-700 rounded-md outline-none"
+            />
+            <button
+              onClick={() => dispatch(admin_order_status_update({ orderId, info: { status, trackingNumber: tracking } }))}
+              className="px-3 py-1 bg-indigo-500 rounded-md text-white text-sm"
+            >
+              Зберегти ТТН
+            </button>
+            <span className="text-xs opacity-70">Вноситься до листа «Відправлено»: вкажіть ТТН і змініть статус.</span>
           </div>
           <div className="flex flex-wrap">
             <div className="w-[50%]">
