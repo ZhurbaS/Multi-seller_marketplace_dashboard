@@ -1,11 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BsArrowBarDown } from "react-icons/bs";
-import Pagination from "../Pagination";
-import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
+import { MdReceiptLong, MdStorefront } from "react-icons/md";
 import { get_admin_orders } from "../../store/Reducers/orderSlice";
 import { payLabel, deliveryLabel, orderNo } from "../../utils/statusLabels";
+import {
+  PageHeader,
+  FilterBar,
+  Select,
+  Table,
+  Pagination,
+  StatusChip,
+  Money,
+  Button,
+  Modal,
+  formatDate,
+} from "../../ui";
+
+const INVOICE_STATUS = { awaiting: "не надіслано", sent: "надіслано", paid: "оплачено", expired: "строк минув", cancelled: "скасовано" };
+
+const payTone = (s) => (s === "paid" ? "success" : s === "unpaid" ? "warning" : "neutral");
+const deliveryTone = (s) =>
+  s === "delivered" ? "success" : s === "cancelled" ? "danger" : s === "shipped" ? "brand" : s === "pending" ? "warning" : "neutral";
+
+const PER_PAGE_OPTIONS = [
+  { value: 5, label: "5 на сторінці" },
+  { value: 10, label: "10 на сторінці" },
+  { value: 20, label: "20 на сторінці" },
+];
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -14,13 +36,9 @@ const Orders = () => {
   const [searchValue, setSearchValue] = useState("");
   const [perPage, setPerPage] = useState(5);
   const [show, setShow] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const { totalOrderCount, myOrdersArr } = useSelector((state) => state.order);
-
-  const toggleSuborder = (orderId) => {
-    // Якщо клікаємо на відкрите замовлення, закриваємо його
-    setShow((prev) => (prev === orderId ? null : orderId));
-  };
 
   useEffect(() => {
     const obj = {
@@ -28,124 +46,132 @@ const Orders = () => {
       page: parseInt(currentPage),
       searchValue,
     };
-    dispatch(get_admin_orders(obj));
-  }, [searchValue, currentPage, perPage]);
+    setLoading(true);
+    Promise.resolve(dispatch(get_admin_orders(obj))).finally(() => setLoading(false));
+  }, [searchValue, currentPage, perPage, dispatch]);
+
+  const opened = show ? (myOrdersArr || []).find((o) => o._id === show) : null;
+
+  const columns = [
+    {
+      key: "no",
+      header: "Замовлення",
+      primary: true,
+      render: (o) => (
+        <div className="min-w-0">
+          <Link to={`/admin/dashboard/order/details/${o._id}`} className="font-semibold text-(--brand-ink) hover:underline">
+            {orderNo(o)}
+          </Link>
+          <div className="text-xs text-(--ink-2)">{formatDate(o.createdAt)}</div>
+        </div>
+      ),
+    },
+    { key: "price", header: "Сума", align: "right", render: (o) => <Money value={o.price} className="font-semibold" /> },
+    {
+      key: "payment",
+      header: "Оплата",
+      render: (o) => (
+        <div className="flex min-w-0 flex-col items-end gap-1 md:items-start">
+          <StatusChip tone={payTone(o.payment_status)}>{payLabel(o.payment_status)}</StatusChip>
+          {o.invoice?.number && (
+            <span className="text-xs text-(--ink-2)">
+              рахунок {o.invoice.number}: {INVOICE_STATUS[o.invoice.status] || ""}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "delivery",
+      header: "Статус",
+      render: (o) => <StatusChip tone={deliveryTone(o.delivery_status)}>{deliveryLabel(o.delivery_status)}</StatusChip>,
+    },
+    {
+      key: "actions",
+      header: "Дії",
+      align: "right",
+      cardLabel: " ",
+      render: (o) => (
+        <div className="flex flex-wrap justify-end gap-2">
+          {Array.isArray(o.suborder) && o.suborder.length > 0 && (
+            <Button size="sm" variant="ghost" icon={<MdStorefront />} onClick={() => setShow(o._id)}>
+              Продавці ({o.suborder.length})
+            </Button>
+          )}
+          <Button size="sm" variant="secondary" as={Link} to={`/admin/dashboard/order/details/${o._id}`}>
+            Переглянути
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const subColumns = [
+    { key: "id", header: "Підзамовлення", primary: true, render: (so) => <span className="break-all font-medium">#{so._id}</span> },
+    { key: "price", header: "Сума", align: "right", render: (so) => <Money value={so.price} /> },
+    { key: "payment", header: "Оплата", render: (so) => <StatusChip tone={payTone(so.payment_status)}>{payLabel(so.payment_status)}</StatusChip> },
+    { key: "delivery", header: "Статус", render: (so) => <StatusChip tone={deliveryTone(so.delivery_status)}>{deliveryLabel(so.delivery_status)}</StatusChip> },
+  ];
 
   return (
-    <div className="px-2 lg:px-7 pt-5">
-      <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-        <div className="flex justify-between items-center">
-          <select
-            onChange={(e) => setPerPage(parseInt(e.target.value))}
-            className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-          >
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-          </select>
-          <input
-            onChange={(e) => setSearchValue(e.target.value)}
-            value={searchValue}
-            className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-            type="text"
-            placeholder="Пошук"
-          />
-        </div>
+    <div>
+      <PageHeader
+        title="Замовлення"
+        description="Усі замовлення покупців. Відкрийте замовлення, щоб змінити статус або підтвердити оплату."
+        breadcrumbs={[{ label: "Огляд", to: "/admin/dashboard" }, { label: "Замовлення" }]}
+      />
 
-        <div className="relative mt-5 overflow-x-auto">
-          <div className="w-full text-sm text-left bg-[#6a5fdf] ">
-            <div className="text-sm text-[#d0d2d6] uppercase border-b border-slate-700">
-              <div className="flex justify-between items-center">
-                <div className="py-3 w-[25%] font-bold">Id замовлення</div>
-                <div className="py-3 w-[13%] font-bold">Ціна</div>
-                <div className="py-3 w-[18%] font-bold">Статус оплати</div>
-                <div className="py-3 w-[18%] font-bold">Статус замовлення</div>
-                <div className="py-3 w-[18%] font-bold">Дія</div>
-                <div className="py-3 w-[8%] font-bold">Деталі</div>
-              </div>
-            </div>
+      <FilterBar
+        search={{
+          value: searchValue,
+          onChange: (v) => {
+            setSearchValue(v);
+            setCurrentPage(1);
+          },
+          placeholder: "Пошук за номером замовлення",
+        }}
+      >
+        <Select
+          aria-label="Кількість на сторінці"
+          size="sm"
+          value={perPage}
+          options={PER_PAGE_OPTIONS}
+          onChange={(e) => {
+            setPerPage(parseInt(e.target.value));
+            setCurrentPage(1);
+          }}
+        />
+      </FilterBar>
 
-            {myOrdersArr.map((o, i) => (
-              <div key={o._id} className="text-[#d0d2d6]">
-                <div className="flex justify-between items-start border-b border-slate-700">
-                  <div className="py-3 w-[25%] font-medium whitespace-nowrap">
-                    {orderNo(o)}
-                    <div className="text-xs opacity-70 font-normal">{new Date(o.createdAt).toLocaleDateString("uk-UA")}</div>
-                  </div>
-                  <div className="py-3 w-[13%] font-medium">₴{o.price}</div>
-                  <div className="py-3 w-[18%] font-medium">
-                    {payLabel(o.payment_status)}
-                    {o.invoice?.number && (
-                      <div className="text-xs opacity-80">
-                        рахунок {o.invoice.number}: {{ awaiting: "не надіслано", sent: "надіслано", paid: "оплачено", expired: "строк минув", cancelled: "скасовано" }[o.invoice.status] || ""}
-                      </div>
-                    )}
-                  </div>
-                  <div className="py-3 w-[18%] font-medium">
-                    {deliveryLabel(o.delivery_status)}
-                  </div>
-                  <div className="py-3 w-[18%] font-medium">
-                    <Link
-                      to={`/admin/dashboard/order/details/${o._id}`}
-                      className="inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-200"
-                    >
-                      Переглянути
-                    </Link>
-                  </div>
-                  <div
-                    onClick={() => toggleSuborder(o._id)}
-                    className="py-3 w-[8%] font-bold cursor-pointer"
-                  >
-                    <BsArrowBarDown />
-                  </div>
-                </div>
+      <Table
+        caption="Замовлення"
+        columns={columns}
+        rows={myOrdersArr || []}
+        loading={loading && !(myOrdersArr || []).length}
+        skeletonRows={perPage}
+        empty={{
+          icon: <MdReceiptLong />,
+          title: searchValue ? "Нічого не знайдено" : "Замовлень поки немає",
+          text: searchValue ? "Спробуйте змінити запит пошуку." : "Нові замовлення покупців з'являться тут.",
+        }}
+      />
 
-                <div
-                  className={
-                    show === o._id
-                      ? "block border-b border-slate-700 bg-[#8288ed]"
-                      : "hidden"
-                  }
-                >
-                  {o.suborder.map((so, i) => (
-                    <div
-                      key={so._id}
-                      className="flex justify-start items-start border-b border-slate-700"
-                    >
-                      <div className="py-3 w-[25%] font-medium whitespace-nowrap pl-3">
-                        #{so._id}
-                      </div>
-                      <div className="py-3 w-[13%] font-medium">
-                        ₴{so.price}
-                      </div>
-                      <div className="py-3 w-[18%] font-medium">
-                        {payLabel(so.payment_status)}
-                      </div>
-                      <div className="py-3 w-[18%] font-medium">
-                        {deliveryLabel(so.delivery_status)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <Pagination page={currentPage} total={totalOrderCount} perPage={perPage} onChange={setCurrentPage} />
 
-        {totalOrderCount <= perPage ? (
-          ""
-        ) : (
-          <div className="w-full flex justify-end mt-4 bottom-4 right-4">
-            <Pagination
-              pageNumber={currentPage}
-              setPageNumber={setCurrentPage}
-              totalItem={totalOrderCount}
-              perPage={perPage}
-              showItem={4}
-            />
-          </div>
-        )}
-      </div>
+      <Modal
+        open={!!opened}
+        onClose={() => setShow(null)}
+        size="lg"
+        title={opened ? `Підзамовлення продавців — ${orderNo(opened)}` : ""}
+        description="Кожен продавець отримує власне підзамовлення."
+        footer={
+          <Button variant="secondary" onClick={() => setShow(null)}>
+            Закрити
+          </Button>
+        }
+      >
+        {opened && <Table caption="Підзамовлення" dense columns={subColumns} rows={opened.suborder || []} />}
+      </Modal>
     </div>
   );
 };

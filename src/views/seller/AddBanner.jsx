@@ -1,169 +1,148 @@
-import React, { useEffect, useState } from "react";
-import { RiImageAddFill } from "react-icons/ri";
-import { overrideStyle } from "../../utils/utils";
-import toast from "react-hot-toast";
-import { PropagateLoader } from "react-spinners";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  add_banner,
-  get_banner,
-  messageClear,
-  update_banner,
-} from "../../store/Reducers/bannerSlice";
+import toast from "react-hot-toast";
+import { MdInventory, MdWallpaper } from "react-icons/md";
+import { add_banner, get_banner, messageClear, update_banner } from "../../store/Reducers/bannerSlice";
+import { Button, Card, CardBody, CardHeader, ImageDrop, PageHeader, Skeleton } from "../../ui";
+import { FormActionsBar } from "../../components/seller/FormKit";
+import { useUnsavedChanges } from "../../components/seller/useUnsavedChanges";
+
+// Банер на сайті 3:1, на телефонах обрізається по центру до 2:1.
+const HINT =
+  "Рекомендований розмір 1600×533 px (співвідношення 3:1), JPG/WebP до 300 КБ. На телефонах обрізається по центру до 2:1 — важливий текст тримайте в центральних 60 % ширини.";
 
 const AddBanner = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { productId } = useParams();
+  const { loader, successMessage, errorMessage, banner } = useSelector((state) => state.banner);
 
-  const { loader, successMessage, errorMessage, banner } = useSelector(
-    (state) => state.banner
-  );
+  const [image, setImage] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
-  const [imageShow, setImageShow] = useState("");
-  const [image, setImage] = useState("");
+  const { element: leaveDialog, guard } = useUnsavedChanges(!!image && !loader);
 
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage);
       dispatch(messageClear());
+      setImage(null);
+      setSubmitted(false);
     }
     if (errorMessage) {
       toast.error(errorMessage);
       dispatch(messageClear());
     }
-  }, [successMessage, errorMessage]);
+  }, [successMessage, errorMessage, dispatch]);
 
-  const imageHandle = (e) => {
-    const files = e.target.files;
-    const length = files.length;
+  useEffect(() => {
+    setFetching(true);
+    dispatch(get_banner(productId)).finally(() => setFetching(false));
+  }, [productId, dispatch]);
 
-    if (length > 0) {
-      setImage(files[0]);
-      setImageShow(URL.createObjectURL(files[0]));
+  const current = banner && (!banner.productId || String(banner.productId) === String(productId)) ? banner : null;
+  const error = submitted && !image ? "Оберіть зображення банера" : "";
+
+  const submit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    if (!image) return;
+    const formData = new FormData();
+    formData.append("mainban", image);
+    if (current) {
+      dispatch(update_banner({ info: formData, bannerId: current._id }));
+    } else {
+      formData.append("productId", productId);
+      dispatch(add_banner(formData));
     }
   };
 
-  const add = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("productId", productId);
-    formData.append("mainban", image);
-    dispatch(add_banner(formData));
-  };
-
-  const update = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("mainban", image);
-    dispatch(update_banner({ info: formData, bannerId: banner._id }));
-  };
-
-  useEffect(() => {
-    dispatch(get_banner(productId));
-  }, [productId]);
+  const toProducts = () => guard(() => navigate("/seller/dashboard/products"));
 
   return (
-    <div className="px-2 lg:px-7 pt-5">
-      <h1 className="text-[#000000] font-semibold text-lg mb-3">
-        Додати банер
-      </h1>
-      <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-        {!banner && (
-          <div>
-            <form onSubmit={add}>
-              <div className="mb-4 ">
-                <label
-                  className="flex justify-center items-center flex-col h-[180px] cursor-pointer border border-dashed hover:border-red-500 w-full text-white"
-                  htmlFor="image"
-                >
-                  <span className="text-4xl">
-                    <RiImageAddFill />
-                  </span>
-                  <span>Оберіть зображення для банера</span>
-                </label>
-                <input
-                  required
-                  onChange={imageHandle}
-                  type="file"
-                  id="image"
-                  name=""
-                  placeholder=""
-                  className="hidden "
-                />
-              </div>
+    <div className="mx-auto w-full max-w-4xl">
+      <PageHeader
+        title={current ? "Банер товару" : "Додати банер"}
+        description="Банер показується в каруселі на головній сторінці магазину й веде на цей товар."
+        breadcrumbs={[{ label: "Товари", to: "/seller/dashboard/products" }, { label: "Банер" }]}
+        actions={
+          <Button variant="secondary" icon={<MdInventory />} onClick={toProducts}>
+            Усі товари
+          </Button>
+        }
+      />
 
-              {imageShow && (
-                <div className="mb-4">
-                  <img className="w-full h-[300px]" src={imageShow} alt="" />
-                </div>
-              )}
-
-              <button
-                disabled={loader ? true : false}
-                className="bg-red-500 w-[280px] hover:shadow-red-300/50 hover:shadow-lg text-white rounded-md px-7 py-2 mb-3"
-              >
-                {loader ? (
-                  <PropagateLoader color="#fff" cssOverride={overrideStyle} />
-                ) : (
-                  "Додати банер"
-                )}
-              </button>
-            </form>
-          </div>
+      <form onSubmit={submit} noValidate aria-busy={loader || undefined} className="flex flex-col gap-4 sm:gap-5">
+        {fetching ? (
+          <Card>
+            <CardBody className="flex flex-col gap-3">
+              <Skeleton width="30%" height="1.25rem" />
+              <Skeleton height="auto" className="aspect-[3/1] w-full" rounded="md" />
+            </CardBody>
+          </Card>
+        ) : (
+          current && (
+            <Card as="section">
+              <CardHeader title="Поточний банер" description="Так банер виглядає зараз (3:1)." icon={<MdWallpaper />} />
+              <CardBody>
+                <img src={current.banner} alt="Поточний банер товару" className="aspect-[3/1] w-full rounded-(--r-md) border border-(--line) bg-(--surface-2) object-cover" />
+              </CardBody>
+            </Card>
+          )
         )}
 
-        {banner && (
-          <div>
-            {
-              <div className="mb-4">
-                <img className="w-full h-[300px]" src={banner.banner} alt="" />
+        <Card as="section">
+          <CardHeader
+            title={current ? "Нове зображення" : "Зображення банера"}
+            description={current ? "Оберіть файл, щоб замінити поточний банер." : "Оберіть файл для банера."}
+            icon={<MdWallpaper />}
+          />
+          <CardBody className="flex flex-col gap-4">
+            <ImageDrop
+              label="Файл банера"
+              required
+              value={image}
+              onChange={setImage}
+              maxSizeMb={5}
+              error={error}
+              hint={HINT}
+              disabled={loader}
+              emptyText="Перетягніть зображення банера сюди або натисніть, щоб обрати"
+              previewClassName="sm:w-80 aspect-[3/1] object-cover"
+            />
+            {image && (
+              <div>
+                <p className="mb-2 text-sm font-medium text-(--ink)">Прев'ю на телефоні (2:1)</p>
+                <PhonePreview file={image} />
               </div>
-            }
-            <form onSubmit={update}>
-              <div className="mb-4 ">
-                <label
-                  className="flex justify-center items-center flex-col h-[180px] cursor-pointer border border-dashed hover:border-red-500 w-full text-white"
-                  htmlFor="image"
-                >
-                  <span className="text-4xl">
-                    <RiImageAddFill />
-                  </span>
-                  <span>Оберіть зображення для банера</span>
-                </label>
-                <input
-                  required
-                  onChange={imageHandle}
-                  type="file"
-                  id="image"
-                  name=""
-                  placeholder=""
-                  className="hidden "
-                />
-              </div>
+            )}
+          </CardBody>
+        </Card>
 
-              {imageShow && (
-                <div className="mb-4">
-                  <img className="w-full h-[300px]" src={imageShow} alt="" />
-                </div>
-              )}
-
-              <button
-                disabled={loader ? true : false}
-                className="bg-red-500 w-[280px] hover:shadow-red-300/50 hover:shadow-lg text-white rounded-md px-7 py-2 mb-3"
-              >
-                {loader ? (
-                  <PropagateLoader color="#fff" cssOverride={overrideStyle} />
-                ) : (
-                  "Оновити банер"
-                )}
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
+        <FormActionsBar
+          dirty={!!image}
+          loading={loader}
+          submitLabel={current ? "Оновити банер" : "Додати банер"}
+          savedText={current ? "Банер опубліковано" : "Оберіть зображення"}
+          onCancel={toProducts}
+        />
+      </form>
+      {leaveDialog}
     </div>
   );
 };
+
+function PhonePreview({ file }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  if (!url) return null;
+  return <img src={url} alt="Прев'ю банера на телефоні" className="aspect-[2/1] w-full max-w-xs rounded-(--r-md) border border-(--line) object-cover" />;
+}
 
 export default AddBanner;

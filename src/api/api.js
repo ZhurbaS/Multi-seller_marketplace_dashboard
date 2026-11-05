@@ -17,4 +17,19 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Старі записи мають http://res.cloudinary.com/... — на https-сайті це Mixed Content; піднімаємо до https.
+api.interceptors.response.use((res) => {
+  try {
+    if (res.data && typeof res.data === "object") {
+      const raw = JSON.stringify(res.data);
+      if (raw.includes("http://res.cloudinary.com")) {
+        res.data = JSON.parse(raw.replaceAll("http://res.cloudinary.com", "https://res.cloudinary.com"));
+      }
+    }
+  } catch {
+    /* залишаємо як є */
+  }
+  return res;
+});
+
 export default api;

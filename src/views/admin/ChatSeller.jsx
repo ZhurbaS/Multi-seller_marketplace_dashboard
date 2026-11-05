@@ -1,247 +1,207 @@
-import React, { useEffect, useRef, useState } from "react";
-import { IoMdClose } from "react-icons/io";
-import { FaList } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import { MdArrowBack, MdChatBubbleOutline, MdSearch, MdSend, MdStorefront } from "react-icons/md";
 import {
   get_admin_message,
   get_sellers,
   messageClear,
   send_message_seller_admin,
-  updateAdminMessage,
   updateSellerMessage,
 } from "../../store/Reducers/chatSlice";
-import { Link, useParams } from "react-router-dom";
-import { FaGrinHearts } from "react-icons/fa";
-
 import { socket } from "../../utils/utils";
-import toast from "react-hot-toast";
+import { PageHeader, Input, Button, IconButton, EmptyState, cx, formatDate } from "../../ui";
+
+const Avatar = ({ src, name, online, size = "md" }) => (
+  <span className={cx("relative inline-flex shrink-0", size === "sm" ? "h-9 w-9" : "h-10 w-10")}>
+    {src ? (
+      <img src={src} alt="" className="h-full w-full rounded-full border border-(--line) object-cover" />
+    ) : (
+      <span className="flex h-full w-full items-center justify-center rounded-full bg-(--brand-soft) text-sm font-semibold text-(--brand-ink)" aria-hidden="true">
+        {String(name || "?").slice(0, 1).toUpperCase()}
+      </span>
+    )}
+    {online && (
+      <span className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-(--surface) bg-(--success)" aria-label="онлайн" />
+    )}
+  </span>
+);
 
 const ChatSeller = () => {
-  const scrollRef = useRef();
-  const [show, setShow] = useState(true);
+  const scrollRef = useRef(null);
   const { sellerId } = useParams();
   const [text, setText] = useState("");
+  const [q, setQ] = useState("");
   const [receiverMessage, setReceiverMessage] = useState("");
 
-  const {
-    sellers,
-    activeSeller,
-    seller_admin_message,
-    currentSeller,
-    successMessage,
-  } = useSelector((state) => state.chat);
-
+  const { sellers, activeSeller, seller_admin_message, currentSeller, successMessage } = useSelector((state) => state.chat);
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(get_sellers());
-  });
+  }, [dispatch]);
 
   const send = (e) => {
     e.preventDefault();
+    if (!sellerId || !text.trim()) return;
     dispatch(
       send_message_seller_admin({
         senderId: "",
         receiverId: sellerId,
         message: text,
         senderName: "Підтримка адміна",
-      })
+      }),
     );
     setText("");
   };
 
   useEffect(() => {
-    if (sellerId) {
-      dispatch(get_admin_message(sellerId));
-    }
-  }, [sellerId]);
+    if (sellerId) dispatch(get_admin_message(sellerId));
+  }, [sellerId, dispatch]);
 
   useEffect(() => {
     if (successMessage) {
-      socket.emit(
-        "send_message_admin_to_seller",
-        seller_admin_message[seller_admin_message.length - 1]
-      );
+      socket.emit("send_message_admin_to_seller", seller_admin_message[seller_admin_message.length - 1]);
       dispatch(messageClear());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successMessage]);
 
   useEffect(() => {
-    socket.on("received_seller_message", (msg) => {
-      setReceiverMessage(msg);
-    });
+    const onMsg = (msg) => setReceiverMessage(msg);
+    socket.on("received_seller_message", onMsg);
+    return () => socket.off("received_seller_message", onMsg);
   }, []);
 
   useEffect(() => {
     if (receiverMessage) {
-      if (
-        receiverMessage.senderId === sellerId &&
-        receiverMessage.receiverId === ""
-      ) {
+      if (receiverMessage.senderId === sellerId && receiverMessage.receiverId === "") {
         dispatch(updateSellerMessage(receiverMessage));
       } else {
-        toast.success(
-          receiverMessage.senderName + " " + " надіслав повідомлення"
-        );
+        toast.success(`${receiverMessage.senderName} надіслав повідомлення`);
         dispatch(messageClear());
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [receiverMessage]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [seller_admin_message]);
 
+  const isOnline = (id) => (activeSeller || []).some((a) => a.sellerId === id);
+  const list = (sellers || []).filter((s) => !q || String(s.name || "").toLowerCase().includes(q.toLowerCase()));
+
   return (
-    <div className="px-2 lg:px-7 py-5">
-      <div className="w-full bg-[#6a5fdf] px-4 py-4 rounded-md h-[calc(100vh-140px)]">
-        <div className="flex w-full h-full relative">
-          <div
-            className={`w-[280px] h-full absolute z-10 ${
-              show ? "-left-[16px]" : "-left-[336px]"
-            } md:left-0 md:relative transition-all`}
-          >
-            <div className="w-full h-[calc(100vh-177px)] bg-[#9e97e9] md:bg-transparent overflow-y-auto">
-              <div className="flex text-xl justify-between items-center p-4 md:p-0 md:px-3 md:pb-3 text-white">
-                <h2>Продавці</h2>
-                <span
-                  onClick={() => setShow(!show)}
-                  className="block cursor-pointer md:hidden"
-                >
-                  <IoMdClose />
-                </span>
-              </div>
+    <div>
+      <PageHeader
+        title="Чат із продавцями"
+        description="Підтримка продавців у реальному часі."
+        breadcrumbs={[{ label: "Огляд", to: "/admin/dashboard" }, { label: "Чат із продавцями" }]}
+      />
 
-              {sellers.map((s, i) => (
+      <div className="flex h-[calc(100dvh-220px)] min-h-[420px] min-w-0 overflow-hidden rounded-(--r-lg) border border-(--line) bg-(--surface) shadow-(--shadow-1)">
+        {/* Список продавців: на мобільних — окремий екран, коли співрозмовника не обрано */}
+        <aside
+          aria-label="Продавці"
+          className={cx("flex min-w-0 flex-col border-(--line) md:w-72 md:shrink-0 md:border-r", sellerId ? "hidden md:flex" : "flex w-full")}
+        >
+          <div className="border-b border-(--line) p-3">
+            <Input
+              type="search"
+              inputMode="search"
+              size="sm"
+              aria-label="Пошук продавця"
+              placeholder="Пошук продавця"
+              leftIcon={<MdSearch />}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+          <nav className="min-h-0 flex-1 overflow-y-auto p-2">
+            {list.length === 0 ? (
+              <EmptyState compact icon={<MdStorefront />} title={q ? "Нічого не знайдено" : "Продавців поки немає"} />
+            ) : (
+              list.map((s) => (
                 <Link
-                  to={`/admin/dashboard/chat-sellers/${s._id}`}
                   key={s._id}
-                  className={`h-[60px] flex justify-start gap-2 items-center text-white px-2 py-2 rounded-md cursor-pointer ${
-                    sellerId === s._id ? "bg-[#8288ed]" : ""
-                  }`}
+                  to={`/admin/dashboard/chat-sellers/${s._id}`}
+                  aria-current={sellerId === s._id ? "page" : undefined}
+                  className={cx(
+                    "flex min-h-[52px] min-w-0 items-center gap-3 rounded-(--r-md) px-2.5 py-2 text-sm",
+                    sellerId === s._id ? "bg-(--brand-soft) text-(--brand-ink)" : "text-(--ink) hover:bg-(--surface-2)",
+                  )}
                 >
-                  <div className="relative">
-                    <img
-                      className="w-[38px] h-[38px] border-white border-2 max-w-[38px] p-[2px] rounded-full"
-                      src={s.image}
-                      alt=""
-                    />
-
-                    {activeSeller.some((a) => a.sellerId === s._id) && (
-                      <div className="w-[10px] h-[10px] bg-green-500 rounded-full absolute right-0 bottom-0"></div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-center items-start flex-col w-full">
-                    <div className="flex justify-between items-center w-full">
-                      <h2 className="text-base font-semibold">{s.name}</h2>
-                    </div>
-                  </div>
+                  <Avatar src={s.image} name={s.name} online={isOnline(s._id)} size="sm" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{s.name}</span>
                 </Link>
-              ))}
-            </div>
-          </div>
+              ))
+            )}
+          </nav>
+        </aside>
 
-          <div className="w-full md:w-[cal(100%-200px)] md:pl-4">
-            <div className="flex justify-between items-center">
-              {sellerId && (
-                <div className="flex justify-start items-center gap-3">
-                  <div className="relative">
-                    <img
-                      className="w-[45px] h-[45px] border-green-500 border-2 max-w-[45px] p-[2px] rounded-full"
-                      src={currentSeller?.image}
-                      alt=""
-                    />
-                    <div className="w-[10px] h-[10px] bg-green-500 rounded-full absolute right-0 bottom-0"></div>
-                  </div>
-                  <span className="text-white">{currentSeller?.name}</span>
+        <section aria-label="Повідомлення" className={cx("min-w-0 flex-1 flex-col", sellerId ? "flex" : "hidden md:flex")}>
+          {sellerId ? (
+            <>
+              <header className="flex min-w-0 items-center gap-3 border-b border-(--line) px-3 py-2.5 sm:px-4">
+                <IconButton as={Link} to="/admin/dashboard/chat-sellers" icon={<MdArrowBack />} label="До списку продавців" className="md:hidden" />
+                <Avatar src={currentSeller?.image} name={currentSeller?.name} online={isOnline(sellerId)} />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-(--ink)">{currentSeller?.name || "Продавець"}</p>
+                  <p className="text-xs text-(--ink-2)">{isOnline(sellerId) ? "онлайн" : "не в мережі"}</p>
                 </div>
-              )}
+              </header>
 
-              <div
-                onClick={() => setShow(!show)}
-                className="w-[35px] flex md:hidden h-[35px] rounded-sm bg-blue-500 shadow-lg hover:shadow-blue-500/50 justify-center cursor-pointer items-center text-white"
-              >
-                <span>
-                  <FaList />
-                </span>
-              </div>
-            </div>
-
-            <div className="py-4">
-              <div className="bg-[#475569] h-[calc(100vh-290px)] rounded-md p-3 overflow-y-auto ">
-                {sellerId ? (
-                  seller_admin_message.map((m, i) => {
-                    if (m.senderId === sellerId) {
-                      return (
-                        <div
-                          ref={scrollRef}
-                          className="w-full flex justify-start items-center"
-                        >
-                          <div className="flex justify-start items-start gap-2 md:px-3 py-2 max-w-full lg:max-w-[85%]">
-                            <div>
-                              <img
-                                className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src={currentSeller?.image}
-                                alt=""
-                              />
-                            </div>
-                            <div className="flex justify-center items-start flex-col w-full bg-blue-500 shadow-lg shadow-blue-500/50 text-white py-1 px-2 rounded-sm">
-                              <span>{m.message}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div
-                          ref={scrollRef}
-                          className="w-full flex justify-end items-center"
-                        >
-                          <div className="flex justify-start items-start gap-2 md:px-3 py-2 max-w-full lg:max-w-[85%]">
-                            <div className="flex justify-center items-start flex-col w-full bg-red-500 shadow-lg shadow-red-500/50 text-white py-1 px-2 rounded-sm">
-                              <span>{m.message}</span>
-                            </div>
-                            <div>
-                              <img
-                                className="w-[38px] h-[38px] border-2 border-white rounded-full max-w-[38px] p-[3px]"
-                                src={`/images/adminNEW.jpg`}
-                                alt=""
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                  })
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-(--surface-2) p-3 sm:p-4" role="log" aria-live="polite">
+                {(seller_admin_message || []).length === 0 ? (
+                  <EmptyState compact icon={<MdChatBubbleOutline />} title="Повідомлень ще немає" text="Напишіть продавцю першим." />
                 ) : (
-                  <div className="w-full h-full flex justify-center items-center flex-col gap-2 text-white">
-                    <span>
-                      <FaGrinHearts />
-                    </span>
-                    <span>Оберіть продавця</span>
-                  </div>
+                  seller_admin_message.map((m, i) => {
+                    const fromSeller = m.senderId === sellerId;
+                    return (
+                      <div key={m._id || i} className={cx("flex min-w-0", fromSeller ? "justify-start" : "justify-end")}>
+                        <div
+                          className={cx(
+                            "max-w-[85%] min-w-0 rounded-(--r-lg) px-3 py-2 text-sm shadow-(--shadow-1) lg:max-w-[70%]",
+                            fromSeller ? "rounded-bl-(--r-sm) bg-(--surface) text-(--ink)" : "rounded-br-(--r-sm) bg-(--brand) text-(--on-brand)",
+                          )}
+                        >
+                          <p className="break-words whitespace-pre-wrap">{m.message}</p>
+                          {m.createdAt && (
+                            <p className={cx("mt-1 text-[11px] tabular-nums", fromSeller ? "text-(--ink-2)" : "opacity-80")}>
+                              {formatDate(m.createdAt, { withTime: true })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
+                <div ref={scrollRef} />
               </div>
+
+              <form onSubmit={send} className="flex min-w-0 gap-2 border-t border-(--line) p-3">
+                <Input
+                  className="min-w-0 flex-1"
+                  aria-label="Повідомлення"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Введіть повідомлення"
+                  autoComplete="off"
+                  enterKeyHint="send"
+                />
+                <Button type="submit" icon={<MdSend />} disabled={!text.trim()}>
+                  <span className="hidden sm:inline">Надіслати</span>
+                </Button>
+              </form>
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-6">
+              <EmptyState icon={<MdChatBubbleOutline />} title="Оберіть продавця" text="Виберіть співрозмовника зі списку ліворуч, щоб відкрити листування." />
             </div>
-            <form onSubmit={send} className="flex gap-3">
-              <input
-                readOnly={sellerId ? false : true}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="w-full flex justify-between px-2 border border-slate-700 items-center py-[5px] focus:border-blue-500 rounded-md outline-none bg-transparent text-[#d0d2d6]"
-                type="text"
-                placeholder="Введіть повідомлення"
-              />
-              <button
-                disabled={sellerId ? false : true}
-                className="shadow-lg bg-[#06b6d4] hover:shadow-cyan-500/50 text-semibold w-[110px] h-[35px] rounded-md text-white flex justify-center items-center"
-              >
-                Надіслати
-              </button>
-            </form>
-          </div>
-        </div>
+          )}
+        </section>
       </div>
     </div>
   );

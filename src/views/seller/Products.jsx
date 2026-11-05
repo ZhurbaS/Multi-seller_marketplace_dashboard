@@ -1,271 +1,169 @@
-import React, { useEffect, useState } from "react";
-import Search from "../components/Search";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Pagination from "../Pagination";
-import { FaEdit, FaEye } from "react-icons/fa";
-import { FaTrash } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  get_products,
-  delete_product,
-  messageClear,
-} from "../../store/Reducers/productSlice";
-import { RiImageEditLine } from "react-icons/ri";
 import toast from "react-hot-toast";
+import { MdAdd, MdDeleteOutline, MdEdit, MdInventory2, MdOpenInNew, MdWallpaper } from "react-icons/md";
+import { get_products, delete_product, messageClear } from "../../store/Reducers/productSlice";
+import { Badge, Button, ConfirmDialog, FilterBar, IconButton, Money, PageHeader, Pagination, Select, Table } from "../../ui";
+import { ProductThumb, StockChip } from "../../components/seller/ProductCells";
+import { PER_PAGE_OPTIONS, frontProductUrl, useDebounced } from "../../components/seller/listUtils";
 
 const Products = () => {
   const dispatch = useDispatch();
-  const { products, totalProduct, successMessage, errorMessage } = useSelector(
-    (state) => state.product
-  );
+  const { products, totalProduct, successMessage, errorMessage } = useSelector((state) => state.product);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchValue, setSearchValue] = useState("");
-  const [perPage, setPerPage] = useState(5);
+  const [searchInput, setSearchInput] = useState("");
+  const searchValue = useDebounced(searchInput.trim());
+  const [perPage, setPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
   // Товар, для якого відкрито вікно підтвердження видалення
   const [productToDelete, setProductToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    return dispatch(get_products({ perPage: parseInt(perPage), page: parseInt(currentPage), searchValue })).finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage);
       dispatch(messageClear());
       setProductToDelete(null);
+      setDeleting(false);
       // Оновлюємо сторінку списку, щоб підтягнути наступний товар замість видаленого
-      dispatch(
-        get_products({
-          perPage: parseInt(perPage),
-          page: parseInt(currentPage),
-          searchValue,
-        })
-      );
+      load();
     }
     if (errorMessage) {
       toast.error(errorMessage);
       dispatch(messageClear());
       setProductToDelete(null);
+      setDeleting(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successMessage, errorMessage]);
 
   useEffect(() => {
-    const obj = {
-      perPage: parseInt(perPage),
-      page: parseInt(currentPage),
-      searchValue,
-    };
-    dispatch(get_products(obj));
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue, currentPage, perPage]);
 
+  // Якщо після видалення сторінка спорожніла — на попередню.
+  useEffect(() => {
+    if (!loading && currentPage > 1 && products.length === 0 && totalProduct > 0) setCurrentPage((p) => p - 1);
+  }, [loading, products.length, totalProduct, currentPage]);
+
+  const actions = (product) => (
+    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+      <IconButton as={Link} to={`/seller/dashboard/edit-product/${product._id}`} icon={<MdEdit />} label="Редагувати" />
+      <IconButton as={Link} to={`/seller/dashboard/add-banner/${product._id}`} icon={<MdWallpaper />} label="Банер товару" />
+      <IconButton as="a" href={frontProductUrl(product.slug)} target="_blank" rel="noreferrer" icon={<MdOpenInNew />} label="Переглянути на сайті" />
+      <IconButton icon={<MdDeleteOutline />} label="Видалити товар" className="text-(--danger)" onClick={() => setProductToDelete(product)} />
+    </div>
+  );
+
+  const columns = [
+    {
+      key: "name",
+      header: "Товар",
+      primary: true,
+      render: (p) => (
+        <div className="flex min-w-0 items-center gap-3">
+          <ProductThumb src={p.images?.[0]} />
+          <div className="min-w-0">
+            <Link to={`/seller/dashboard/edit-product/${p._id}`} className="line-clamp-2 break-words font-medium text-(--ink) hover:text-(--brand-ink) hover:underline" title={p.name}>
+              {p.name}
+            </Link>
+            <p className="truncate text-xs text-(--ink-2)">{[p.brand, p.category?.name].filter(Boolean).join(" · ") || "—"}</p>
+          </div>
+        </div>
+      ),
+      className: "max-w-[22rem]",
+    },
+    { key: "category", header: "Категорія", render: (p) => p.category?.name || "—", hideOnCard: true },
+    { key: "price", header: "Ціна", align: "right", render: (p) => <Money value={p.price} /> },
+    {
+      key: "discount",
+      header: "Знижка",
+      align: "right",
+      render: (p) => (p.discount ? <Badge tone="danger">−{p.discount} %</Badge> : <span className="text-(--ink-2)">Без знижки</span>),
+    },
+    { key: "stock", header: "Наявність", align: "right", render: (p) => <StockChip stock={p.stock} /> },
+    { key: "actions", header: <span className="sr-only">Дії</span>, cardLabel: "Дії", align: "right", render: actions },
+  ];
+
   return (
-    <div className="px-2 lg:px-7 pt-5">
-      <h1 className="text-[#000000] font-semibold text-lg mb-3">Всі товари</h1>
-      <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-        <Search
-          setPerPage={setPerPage}
-          setSearchValue={setSearchValue}
-          searchValue={searchValue}
+    <div className="mx-auto w-full">
+      <PageHeader
+        title="Товари"
+        description={totalProduct ? `Усього товарів: ${totalProduct}` : "Керуйте асортиментом магазину"}
+        actions={
+          <Button as={Link} to="/seller/dashboard/add-product" icon={<MdAdd />}>
+            Додати товар
+          </Button>
+        }
+      />
+
+      <FilterBar
+        search={{ value: searchInput, onChange: (v) => { setSearchInput(v); setCurrentPage(1); }, placeholder: "Пошук за назвою, брендом…" }}
+        onReset={searchInput ? () => setSearchInput("") : undefined}
+      >
+        <Select
+          aria-label="Кількість на сторінці"
+          size="sm"
+          value={perPage}
+          onChange={(e) => {
+            setPerPage(parseInt(e.target.value));
+            setCurrentPage(1);
+          }}
+          options={PER_PAGE_OPTIONS}
         />
+      </FilterBar>
 
-        <div className="relative overflow-x-auto nmt-5">
-          <table className="w-full text-sm text-left text-[#d0d2d6]">
-            <thead className="text-sm text-[#d0d2d6] uppercase border-b border-slate-700 ">
-              <tr>
-                <th scope="col" className="py-3 px-4">
-                  №
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Зображення
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Назва
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Категорія
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Бренд
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Ціна
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Знижка
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Наявність
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Дія
-                </th>
-              </tr>
-            </thead>
+      <Table
+        caption="Список товарів"
+        columns={columns}
+        rows={products}
+        loading={loading && products.length === 0}
+        skeletonRows={perPage > 10 ? 10 : perPage}
+        empty={
+          searchValue
+            ? { icon: <MdInventory2 />, title: "Нічого не знайдено", text: `За запитом «${searchValue}» товарів немає.`, action: <Button variant="secondary" onClick={() => setSearchInput("")}>Скинути пошук</Button> }
+            : {
+                icon: <MdInventory2 />,
+                title: "Товарів поки немає",
+                text: "Додайте перший товар — він одразу з'явиться в магазині.",
+                action: (
+                  <Button as={Link} to="/seller/dashboard/add-product" icon={<MdAdd />}>
+                    Додати товар
+                  </Button>
+                ),
+              }
+        }
+        className={loading && products.length > 0 ? "opacity-60 transition-opacity" : undefined}
+      />
 
-            <tbody>
-              {products.map((product, i) => (
-                <tr key={i}>
-                  <td
-                    scope="row"
-                    className="py-1 px-6 font-medium whitespace-nowrap"
-                  >
-                    {i + 1}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    <img
-                      className="w-[45px] h-[45px] "
-                      src={product.images[0]}
-                      alt=""
-                    />
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {product?.name?.slice(0, 15)}...
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {product.category?.name}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {product.brand}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    ₴{product.price}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {product.discount === 0 ? (
-                      <span>Без знижки</span>
-                    ) : (
-                      <span>{product.discount} %</span>
-                    )}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {product.stock <= 0 ? (
-                      <span className="px-2 py-[2px] rounded bg-red-500 text-white text-xs">
-                        Немає в наявності
-                      </span>
-                    ) : product.stock <= 3 ? (
-                      <span className="px-2 py-[2px] rounded bg-yellow-500 text-black text-xs">
-                        Закінчується: {product.stock}
-                      </span>
-                    ) : (
-                      product.stock
-                    )}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    <div className="flex justify-start items-center gap-4">
-                      <Link
-                        to={`/seller/dashboard/edit-product/${product._id}`}
-                        className="p-[6px] bg-yellow-500 rounded hover:shadow-lg hover:shadow-yellow-500/50  "
-                      >
-                        <FaEdit />
-                      </Link>
+      <Pagination page={currentPage} total={totalProduct} perPage={perPage} onChange={setCurrentPage} />
 
-                      <Link
-                        to={`/seller/dashboard/add-banner/${product._id}`}
-                        className="p-[6px] bg-sky-500 rounded hover:shadow-lg hover:shadow-yellow-500/50  "
-                      >
-                        <RiImageEditLine />
-                      </Link>
-
-                      <a
-                        href={`${import.meta.env.VITE_PRODUCTION_FRONT}/product/details/${product.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Переглянути на сайті"
-                        className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  "
-                      >
-                        <FaEye />
-                      </a>
-                      <button
-                        type="button"
-                        title="Видалити товар"
-                        onClick={() => setProductToDelete(product)}
-                        className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50  "
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {totalProduct <= perPage ? (
-          ""
-        ) : (
-          <div className="w-full flex justify-end mt-4 bottom-4 right-4">
-            <Pagination
-              pageNumber={currentPage}
-              setPageNumber={setCurrentPage}
-              totalItem={totalProduct}
-              perPage={perPage}
-              showItem={3}
-            />
-          </div>
-        )}
-      </div>
-
-      {productToDelete && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-4"
-          onClick={() => setProductToDelete(null)}
-        >
-          <div
-            className="w-full max-w-[420px] p-5 bg-[#6a5fdf] rounded-md text-[#d0d2d6] shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold mb-2">Видалити товар?</h2>
-            <p className="text-sm mb-1">
-              Ви збираєтесь назавжди видалити товар:
-            </p>
-            <p className="text-sm font-semibold mb-3 break-words">
-              {productToDelete.name}
-            </p>
-            <p className="text-xs mb-4">
-              Будуть видалені фото, відгуки та згадки в кошиках і списках
-              бажань. Історія вже оформлених замовлень збережеться. Цю дію не
-              можна скасувати.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setProductToDelete(null)}
-                className="bg-slate-700 text-white rounded-md px-4 py-1 text-sm"
-              >
-                Скасувати
-              </button>
-              <button
-                type="button"
-                onClick={() => dispatch(delete_product(productToDelete._id))}
-                className="bg-red-500 hover:shadow-lg hover:shadow-red-500/50 text-white rounded-md px-4 py-1 text-sm"
-              >
-                Видалити
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!productToDelete}
+        title="Видалити товар?"
+        confirmLabel="Видалити назавжди"
+        tone="danger"
+        loading={deleting}
+        onClose={() => setProductToDelete(null)}
+        onConfirm={() => {
+          setDeleting(true);
+          dispatch(delete_product(productToDelete._id));
+        }}
+      >
+        <p className="break-words font-semibold text-(--ink)">{productToDelete?.name}</p>
+        <p className="mt-2 text-sm text-(--ink-2)">
+          Будуть видалені фото, відгуки та згадки в кошиках і списках бажань. Історія вже оформлених замовлень збережеться. Цю дію не
+          можна скасувати.
+        </p>
+      </ConfirmDialog>
     </div>
   );
 };

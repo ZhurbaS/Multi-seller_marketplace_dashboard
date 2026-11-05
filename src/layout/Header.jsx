@@ -1,58 +1,130 @@
-import React from "react";
-import { FaList } from "react-icons/fa";
-import { useSelector } from "react-redux";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { MdMenu, MdChatBubbleOutline, MdExpandMore, MdLogout, MdPerson } from "react-icons/md";
+import { getNav } from "../navigation/index";
+import { logout } from "../store/Reducers/authSlice";
+import { IconButton } from "../ui";
+import { cx } from "../ui/cx";
+import ThemeToggle from "./ThemeToggle";
+import { findActive } from "./navUtils";
 
-const Header = ({ showSidebar, setShowSidebar }) => {
-  const { userInfo } = useSelector((state) => state.auth);
+const ROLE_LABEL = { admin: "Адміністратор", seller: "Продавець" };
+
+function Avatar({ src, name }) {
+  const [broken, setBroken] = useState(false);
+  const initials = (name || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+  if (src && !broken) {
+    return <img src={src} alt="" onError={() => setBroken(true)} className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-(--line)" />;
+  }
+  return (
+    <span aria-hidden="true" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--brand-soft) text-sm font-semibold text-(--brand-ink)">
+      {initials || "?"}
+    </span>
+  );
+}
+
+function UserMenu({ userInfo, role }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => ref.current && !ref.current.contains(e.target) && setOpen(false);
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const name = userInfo?.name || "";
+  const avatar = role === "admin" ? "/images/adminNEW.jpg" : userInfo?.image;
+  const item = "flex min-h-10 w-full items-center gap-2 rounded-(--r-sm) px-3 py-2 text-left text-sm text-(--ink) hover:bg-(--surface-2)";
 
   return (
-    <div className="fixed top-0 left-0 w-full py-5 px-2 lg:px-7 z-40">
-      <div className="ml-0 lg:ml-[260px] rounded-md h-[65px] flex justify-between items-center bg-[#b1addf] px-5 transition-all">
-        <div
-          onClick={() => setShowSidebar(!showSidebar)}
-          className="w-[35px] flex lg:hidden h-[35px] rounded-sm bg-indigo-500 shadow-lg hover:shadow-indigo-500/50 justify-center items-center cursor-pointer"
-        >
-          <span>
-            <FaList />
-          </span>
-        </div>
-
-        <div className="hidden md:block">
-          <input
-            className="px-3 py-2 outline-none border bg-transparent border-slate-700 rounded-md text-[#423d72] focus:border-indigo-400 overflow-hidden "
-            type="text"
-            name="search"
-            placeholder="Пошук"
-          />
-        </div>
-        <div className="flex justify-center items-center gap-8 relative">
-          <div className="flex justify-center items-center">
-            <div className="flex justify-center items-center gap-3">
-              <div className="flex justify-center items-center flex-col text-end">
-                <h2 className="text-md font-bold">{userInfo.name}</h2>
-                <span className="text-[14px] w-full font-normal">
-                  {userInfo.role}
-                </span>
-              </div>
-
-              {userInfo.role === "admin" ? (
-                <img
-                  className="w-[45px] h-[45px] rounded-full overflow-hidden"
-                  src={`/images/adminNEW.jpg`}
-                  alt=""
-                />
-              ) : (
-                <img
-                  className="w-[45px] h-[45px] rounded-full overflow-hidden"
-                  src={userInfo.image}
-                  alt=""
-                />
-              )}
-            </div>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-11 min-w-0 items-center gap-2 rounded-(--r-md) px-1.5 hover:bg-(--surface-2) sm:pr-2"
+      >
+        <Avatar src={avatar} name={name} />
+        <span className="hidden min-w-0 flex-col text-left leading-tight md:flex">
+          <span className="max-w-[160px] truncate text-sm font-semibold text-(--ink)">{name || "Користувач"}</span>
+          <span className="text-xs text-(--ink-2)">{ROLE_LABEL[role] || role}</span>
+        </span>
+        <MdExpandMore aria-hidden="true" className="hidden text-lg text-(--ink-2) md:block" />
+        <span className="sr-only">Меню користувача</span>
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-(--r-md) border border-(--line) bg-(--surface) p-1.5 shadow-(--shadow-3)">
+          <div className="px-3 py-2 md:hidden">
+            <p className="truncate text-sm font-semibold text-(--ink)">{name}</p>
+            <p className="text-xs text-(--ink-2)">{ROLE_LABEL[role] || role}</p>
           </div>
+          {role === "seller" && (
+            <Link role="menuitem" to="/seller/dashboard/profile" className={item} onClick={() => setOpen(false)}>
+              <MdPerson aria-hidden="true" className="text-lg text-(--ink-2)" /> Профіль
+            </Link>
+          )}
+          <div className="px-3 py-2 sm:hidden">
+            <p className="mb-1.5 text-xs text-(--ink-2)">Тема</p>
+            <ThemeToggle withLabels />
+          </div>
+          <button role="menuitem" type="button" className={cx(item, "text-(--danger)")} onClick={() => dispatch(logout({ navigate, role }))}>
+            <MdLogout aria-hidden="true" className="text-lg" /> Вийти
+          </button>
         </div>
-      </div>
+      )}
     </div>
+  );
+}
+
+/** Шапка: бургер (<lg), назва розділу, перемикач теми, чат, меню користувача. */
+const Header = ({ showSidebar, setShowSidebar }) => {
+  const { userInfo, role } = useSelector((state) => state.auth);
+  const { pathname } = useLocation();
+  const nav = useMemo(() => getNav(role), [role]);
+  const active = findActive(nav, pathname);
+  const title = active?.title || "Кабінет";
+  const chatPath = role === "admin" ? "/admin/dashboard/chat-sellers" : role === "seller" ? "/seller/dashboard/chat-customer" : null;
+
+  useEffect(() => {
+    document.title = `${title} · TechScout`;
+  }, [title]);
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-(--line) bg-(--surface)/90 pt-(--sat) backdrop-blur supports-[backdrop-filter]:bg-(--surface)/80">
+      <div className="mx-auto flex h-(--topbar-h) w-full max-w-[1400px] items-center gap-2 px-3 sm:px-6 lg:px-8">
+        <IconButton
+          icon={<MdMenu />}
+          label="Відкрити меню"
+          aria-expanded={showSidebar}
+          aria-controls="app-sidebar"
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="lg:hidden"
+        />
+        <div className="min-w-0 flex-1">
+          {active?.group && <p className="hidden truncate text-xs text-(--ink-2) sm:block">{active.group}</p>}
+          <p className="truncate text-base font-semibold text-(--ink)">{title}</p>
+        </div>
+        <ThemeToggle className="max-sm:hidden" />
+        {chatPath && <IconButton as={Link} to={chatPath} icon={<MdChatBubbleOutline />} label="Чат" />}
+        <UserMenu userInfo={userInfo} role={role} />
+      </div>
+    </header>
   );
 };
 

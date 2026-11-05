@@ -1,1 +1,315 @@
 @import "tailwindcss";
+
+/* ============================================================
+   ДАШБОРД TechScout — дизайн-токени (єдиний стиль з магазином).
+   Джерело правди для назв: front/src/index.css.
+   Тема магазину (brand/cta/sale/header-bg…) приходить з бекенду
+   у <style id="ts-theme"> (utils/theme.js) і перевизначає :root.
+   Темна тема: <html data-theme="dark"> (utils/themeMode.js).
+   На сторінках — ЛИШЕ токени: bg-(--surface) text-(--ink) border-(--line)
+   або alias-и: bg-surface text-ink border-line bg-brand text-brand-ink…
+   ============================================================ */
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Alias-кольори для Tailwind (bg-surface, text-ink, border-line, bg-brand, text-chart-1 …).
+   inline — утиліти посилаються на var(--token), тож тема/темний режим працюють у рантаймі. */
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-on-brand: var(--on-brand);
+  --color-cta: var(--cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-on-cta: var(--on-cta);
+  --color-cta-disabled: var(--cta-disabled);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-on-danger: var(--on-danger);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+  --color-star: var(--star);
+  --color-sale: var(--sale);
+  --color-on-sale: var(--on-sale);
+  --color-overlay: var(--overlay);
+  --color-sidebar: var(--sidebar-bg);
+  --color-on-sidebar: var(--on-sidebar);
+  --color-on-sidebar-2: var(--on-sidebar-2);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+}
+
+/* ---------- Світла тема (за замовчуванням), пресет «Tech Blue» ---------- */
+:root {
+  color-scheme: light;
+  --page: #f3f5f9;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --line: #dde3ec;
+  --line-strong: #8b95a7;
+  --ink: #0f172a;
+  --ink-2: #4a5568;
+  --brand: #1f5fd6;
+  --brand-hover: #194db0;
+  --brand-soft: #e7effc;
+  --brand-ink: #1f5fd6;
+  --on-brand: #ffffff;
+  --cta: #ff7a1a;
+  --cta-hover: #f06a00;
+  --on-cta: #111827;
+  --cta-disabled: #f6cfae;
+  --price: #0f172a;
+  --sale: #e0234e;
+  --on-sale: #ffffff;
+  --success: #05794a;
+  --success-soft: #e3f3ec;
+  --danger: #c62828;
+  --danger-soft: #fbeaea;
+  --on-danger: #ffffff;
+  --warning: #c97800;
+  --warning-soft: #fdf1dc;
+  --warning-ink: #8a5200;
+  --star: #c47f00;
+  --header-bg: #0d1b36;
+  --header-bg-2: #14264a;
+  --header-hover: rgba(255, 255, 255, 0.12);
+  --on-header: #e8edf6;
+  --on-header-2: #a9b6cc;
+  --on-header-3: #5d6b85;
+  --overlay: rgba(10, 14, 22, 0.55);
+
+  /* Дашборд: бічна панель у кольорі шапки магазину */
+  --sidebar-bg: var(--header-bg);
+  --on-sidebar: var(--on-header);
+  --on-sidebar-2: var(--on-header-2);
+  --sidebar-hover: var(--header-hover);
+  --sidebar-active: var(--brand-soft);
+  --on-sidebar-active: var(--brand-ink);
+
+  /* Палітра графіків (≥3:1 до --surface) */
+  --chart-1: var(--brand);
+  --chart-2: #e8590c;
+  --chart-3: #0f8a5f;
+  --chart-4: #7c3aed;
+  --chart-5: #d6336c;
+  --chart-6: #64748b;
+  --chart-grid: var(--line);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --shadow-2: 0 4px 12px rgba(15, 23, 42, 0.1);
+  --shadow-3: 0 12px 32px rgba(15, 23, 42, 0.18);
+
+  --sidebar-w: 264px;
+  --topbar-h: 64px;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+/* ---------- Темна тема ----------
+   Специфічність :root[data-theme] (0,2,0) > :root з ts-theme, тож
+   похідні від бренду кольори перераховуються від --brand магазину. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b1220;
+  --surface: #121b2d;
+  --surface-2: #1a253b;
+  --line: #27344d;
+  --line-strong: #63738f;
+  --ink: #e7ecf5;
+  --ink-2: #a7b3c7;
+  --brand-hover: color-mix(in srgb, var(--brand) 82%, #ffffff);
+  --brand-soft: color-mix(in srgb, var(--brand) 24%, #121b2d);
+  --brand-ink: color-mix(in srgb, var(--brand) 40%, #ffffff);
+  --cta-disabled: color-mix(in srgb, var(--cta) 35%, #121b2d);
+  --price: #e7ecf5;
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --on-danger: #111827;
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-ink: #fcd34d;
+  --star: #fbbf24;
+  --overlay: rgba(0, 0, 0, 0.62);
+
+  --sidebar-bg: #0e1626;
+  --on-sidebar: #e7ecf5;
+  --on-sidebar-2: #9aa7bd;
+  --sidebar-hover: rgba(255, 255, 255, 0.07);
+  --sidebar-active: var(--brand-soft);
+  --on-sidebar-active: var(--brand-ink);
+
+  --chart-1: color-mix(in srgb, var(--brand) 55%, #ffffff);
+  --chart-2: #fb923c;
+  --chart-3: #34d399;
+  --chart-4: #a78bfa;
+  --chart-5: #f472b6;
+  --chart-6: #94a3b8;
+  --chart-grid: #233049;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 14px 36px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Базові стилі: ЛИШЕ в @layer base (щоб не перебивати утиліти) ---------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--topbar-h) + 12px);
+  }
+  body {
+    font-family: var(--font-sans);
+    background: var(--page);
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.5;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  .tabular,
+  [data-num] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Поля ≥16px на мобільних — iOS не зумить */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+  @media (min-width: 1024px) and (hover: hover) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: 0.9375rem;
+    }
+  }
+
+  ::placeholder {
+    color: var(--ink-2);
+    opacity: 0.8;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--on-sidebar);
+  }
+
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ---------- Власні утиліти ---------- */
+@utility pb-safe {
+  padding-bottom: max(1.5rem, calc(var(--sab) + 1rem));
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+@keyframes ts-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    color-mix(in srgb, var(--surface-2) 60%, var(--line)) 37%,
+    var(--surface-2) 63%
+  );
+  background-size: 400% 100%;
+  animation: ts-shimmer 1.4s ease infinite;
+}
+
+/* ApexCharts: тултіп/меню з токенів (працює в обох темах) */
+@layer components {
+  .apexcharts-tooltip.apexcharts-theme-light,
+  .apexcharts-tooltip.apexcharts-theme-dark {
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: var(--shadow-2) !important;
+  }
+  .apexcharts-tooltip-title {
+    background: var(--surface-2) !important;
+    border-bottom: 1px solid var(--line) !important;
+    font-family: var(--font-sans) !important;
+  }
+  .apexcharts-xaxistooltip,
+  .apexcharts-yaxistooltip {
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    border-color: var(--line) !important;
+  }
+  .apexcharts-menu {
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+  }
+  .apexcharts-menu-item:hover {
+    background: var(--surface-2) !important;
+  }
+  .apexcharts-text,
+  .apexcharts-legend-text {
+    font-family: var(--font-sans) !important;
+  }
+}

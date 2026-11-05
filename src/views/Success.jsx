@@ -1,62 +1,44 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  active_stripe_connect_account,
-  messageClear,
-} from "../store/Reducers/sellerSlice";
-import { FadeLoader } from "react-spinners";
-import errorImg from "../assets/error.png";
-import successImg from "../assets/success.png";
+import { MdCheckCircle, MdErrorOutline } from "react-icons/md";
+import { active_stripe_connect_account, messageClear } from "../store/Reducers/sellerSlice";
+import { Button, EmptyState, Spinner } from "../ui";
 
 const Success = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  const { successMessage, errorMessage, loader } = useSelector(
-    (state) => state.seller
-  );
+  const { successMessage, errorMessage, loader } = useSelector((state) => state.seller);
 
   const queryParams = new URLSearchParams(window.location.search);
   const activeCode = queryParams.get("activeCode");
 
   useEffect(() => {
     dispatch(active_stripe_connect_account(activeCode));
-  }, [activeCode]);
+  }, [activeCode, dispatch]);
 
   const redirect = () => {
     dispatch(messageClear());
     navigate("/");
   };
 
+  const action = <Button onClick={redirect}>До панелі керування</Button>;
+
   return (
-    <div className="w-screen h-screen flex justify-center items-center flex-col gap-4">
-      {loader ? (
-        <FadeLoader />
-      ) : errorMessage ? (
-        <>
-          <img src={errorImg} alt="" />
-          <button
-            onClick={redirect}
-            className="px-5 py-2 bg-green-700 rounded-sm text-white cursor-pointer"
-          >
-            До панелі керування
-          </button>
-        </>
-      ) : (
-        successMessage && (
-          <>
-            <img src={successImg} alt="" />
-            <button
-              onClick={redirect}
-              className="px-5 py-2 bg-green-700 rounded-sm text-white cursor-pointer"
-            >
-              До панелі керування
-            </button>
-          </>
-        )
-      )}
-    </div>
+    <main className="flex min-h-dvh items-center justify-center bg-(--page) px-4">
+      <div className="w-full max-w-lg rounded-(--r-lg) border border-(--line) bg-(--surface) shadow-(--shadow-2)">
+        {loader ? (
+          <div className="flex flex-col items-center gap-3 p-10 text-(--ink-2)">
+            <Spinner label="Активуємо платіжний акаунт…" />
+            <span>Активуємо платіжний акаунт…</span>
+          </div>
+        ) : errorMessage ? (
+          <EmptyState icon={<MdErrorOutline />} title="Не вдалося активувати акаунт" text={errorMessage} action={action} />
+        ) : successMessage ? (
+          <EmptyState icon={<MdCheckCircle />} title="Акаунт активовано" text={successMessage} action={action} />
+        ) : null}
+      </div>
+    </main>
   );
 };
 

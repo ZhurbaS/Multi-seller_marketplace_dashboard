@@ -1,46 +1,33 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { admin_login, messageClear } from "../../store/Reducers/authSlice";
-import { PropagateLoader } from "react-spinners";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { MdAdminPanelSettings, MdMailOutline } from "react-icons/md";
+import { admin_login, messageClear } from "../../store/Reducers/authSlice";
+import { Button, Field, Input } from "../../ui";
+import { AuthShell, PasswordInput } from "../../components/auth/AuthShell";
+import { isEmail } from "../../components/auth/authUtils";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-
   const dispatch = useDispatch();
-  const { loader, errorMessage, successMessage } = useSelector(
-    (state) => state.auth
-  );
+  const { loader, errorMessage, successMessage } = useSelector((state) => state.auth);
 
-  const [state, setState] = useState({
-    email: "",
-    password: "",
-  });
+  const [state, setState] = useState({ email: "", password: "" });
+  const [submitted, setSubmitted] = useState(false);
 
-  const inputHandle = (e) => {
-    setState({
-      ...state,
-      [e.target.name]: e.target.value,
-    });
+  const inputHandle = (e) => setState({ ...state, [e.target.name]: e.target.value });
+
+  const errors = {
+    email: !state.email.trim() ? "Вкажіть e-mail" : !isEmail(state.email) ? "Невірний формат e-mail" : "",
+    password: !state.password.trim() ? "Вкажіть пароль" : "",
   };
 
   const submit = (e) => {
     e.preventDefault();
-    if (!state.email.trim() || !state.password.trim()) {
-      return alert("Всі поля обов'язкові!");
-    }
-
+    setSubmitted(true);
+    if (errors.email || errors.password) return;
     dispatch(admin_login(state));
-    // console.log(state);
-  };
-
-  const overrideStyle = {
-    display: "flex",
-    margin: "0 auto",
-    height: "24px",
-    justifyContent: "center",
-    alignItems: "center",
   };
 
   useEffect(() => {
@@ -53,65 +40,31 @@ const AdminLogin = () => {
       dispatch(messageClear());
       navigate("/");
     }
-  }, [errorMessage, successMessage]);
+  }, [errorMessage, successMessage, dispatch, navigate]);
 
   return (
-    <div className="min-w-screen min-h-screen bg-[#cdcae9] flex justify-center items-center">
-      <div className="w-[350px] text-[#ffffff] p-2">
-        <div className="bg-[#6f68d1] p-4 rounded-md">
-          <div className="h-[70px] flex justify-center items-center">
-            <div className="w-[180px] h-[50px]">
-              <img
-                className="w-full h-full"
-                src={`/images/logoTS.png`}
-                alt="image"
-              />
-            </div>
-          </div>
-
-          <form onSubmit={submit}>
-            <div className="flex flex-col w-full gap-1 mb-3">
-              <label htmlFor="email">Email</label>
-              <input
-                onChange={inputHandle}
-                value={state.email}
-                className="placeholder-gray-400 px-3 py-2 outline-none border border-slate-400 bg-transparent rounded-md"
-                type="email"
-                name="email"
-                placeholder="Email"
-                id="email"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col w-full gap-1 mb-3">
-              <label htmlFor="password">Пароль</label>
-              <input
-                onChange={inputHandle}
-                value={state.password}
-                className="placeholder-gray-400 px-3 py-2 outline-none border border-slate-400 bg-transparent rounded-md"
-                type="text"
-                name="password"
-                placeholder="Пароль"
-                id="password"
-                required
-              />
-            </div>
-
-            <button
-              disabled={loader ? true : false}
-              className="bg-slate-800 w-full hover:shadow-blue-300/50 hover:shadow-lg text-white rounded-md px-7 py-2 mb-3"
-            >
-              {loader ? (
-                <PropagateLoader color="#fff" cssOverride={overrideStyle} />
-              ) : (
-                "Увійти"
-              )}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+    <AuthShell title="Вхід адміністратора" subtitle="Панель керування маркетплейсом TechScout.">
+      <form onSubmit={submit} noValidate className="space-y-4">
+        <Field label="E-mail" required error={submitted ? errors.email : ""}>
+          <Input
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            autoFocus
+            leftIcon={<MdMailOutline />}
+            value={state.email}
+            onChange={inputHandle}
+          />
+        </Field>
+        <Field label="Пароль" required error={submitted ? errors.password : ""}>
+          <PasswordInput name="password" autoComplete="current-password" value={state.password} onChange={inputHandle} />
+        </Field>
+        <Button type="submit" size="lg" fullWidth loading={loader} icon={<MdAdminPanelSettings />}>
+          Увійти
+        </Button>
+      </form>
+    </AuthShell>
   );
 };
 

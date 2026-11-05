@@ -1,22 +1,64 @@
-import React, { forwardRef, useEffect, useState } from "react";
-import { FaHryvniaSign } from "react-icons/fa6";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FixedSizeList as List } from "react-window";
-import {
-  get_seller_payment_details,
-  messageClear,
-  send_withdrawal_request,
-} from "../../store/Reducers/paymentSlice";
 import toast from "react-hot-toast";
-import moment from "moment/moment";
+import { MdAccountBalanceWallet, MdHistory, MdHourglassTop, MdInfoOutline, MdPayments, MdSend, MdTrendingUp } from "react-icons/md";
+import { get_seller_payment_details, messageClear, send_withdrawal_request } from "../../store/Reducers/paymentSlice";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  Input,
+  KpiCard,
+  Money,
+  PageHeader,
+  Pagination,
+  StatusChip,
+  Table,
+  formatDate,
+  formatMoney,
+} from "../../ui";
 
-function handleOnWheel({ deltaY }) {
-  console.log("handleOnWheel", deltaY);
+// Після виведення на балансі має лишитися більше 10 ₴ (правило, як і раніше).
+const MIN_REST = 10;
+const PER_PAGE = 8;
+
+const WITHDRAW_STATUS = {
+  pending: { tone: "warning", label: "Очікує" },
+  success: { tone: "success", label: "Виплачено" },
+  rejected: { tone: "danger", label: "Відхилено" },
+};
+
+function WithdrawStatus({ status }) {
+  const s = WITHDRAW_STATUS[status] || { tone: "neutral", label: status || "—" };
+  return <StatusChip tone={s.tone}>{s.label}</StatusChip>;
 }
 
-const outerElementType = forwardRef((props, ref) => (
-  <div ref={ref} onWheel={handleOnWheel} {...props} />
-));
+function WithdrawTable({ rows, loading, emptyTitle, emptyText }) {
+  const [page, setPage] = useState(1);
+  const slice = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const columns = [
+    { key: "createdAt", header: "Дата", primary: true, render: (r) => formatDate(r.createdAt) },
+    { key: "amount", header: "Сума", align: "right", render: (r) => <Money value={r.amount} className="font-semibold" /> },
+    { key: "status", header: "Статус", align: "right", render: (r) => <WithdrawStatus status={r.status} /> },
+  ];
+  return (
+    <>
+      <Table
+        columns={columns}
+        rows={slice}
+        rowKey={(r, i) => r._id || i}
+        loading={loading}
+        skeletonRows={3}
+        dense
+        empty={{ icon: <MdHistory />, title: emptyTitle, text: emptyText }}
+        className="border-0 rounded-none"
+      />
+      <Pagination page={page} total={rows.length} perPage={PER_PAGE} onChange={setPage} showSummary={false} className="px-4 pb-4" />
+    </>
+  );
+}
 
 const Payment = () => {
   const dispatch = useDispatch();
@@ -35,59 +77,41 @@ const Payment = () => {
     pendingWithdrawals,
   } = useSelector((state) => state.payment);
 
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const maxAmount = Math.max(0, Math.ceil((Number(availableAmount) || 0) - MIN_REST) - 1);
+
+  const amountError = useMemo(() => {
+    const v = String(amount).trim();
+    if (!v) return "Вкажіть суму";
+    if (!/^\d+$/.test(v) || Number(v) <= 0) return "Ціле число гривень, більше 0";
+    if (!(availableAmount - Number(v) > MIN_REST)) return maxAmount > 0 ? `Недостатній залишок: максимум ${formatMoney(maxAmount)}` : "Недостатній залишок";
+    return "";
+  }, [amount, availableAmount, maxAmount]);
 
   const sendRequest = (e) => {
     e.preventDefault();
-    if (availableAmount - amount > 10) {
+    setTouched(true);
+    if (amountError) {
+      toast.error(amountError);
+      return;
+    }
+    if (availableAmount - amount > MIN_REST) {
       dispatch(send_withdrawal_request({ amount, sellerId: userInfo._id }));
-      setAmount(0);
+      setAmount("");
+      setTouched(false);
     } else {
       toast.error("Недостатній залишок");
     }
   };
 
-  const Row = ({ index, style }) => {
-    return (
-      <div style={style} className="flex text-sm text-white font-medium">
-        <div className="w-[25%] p-2 whitespace-nowrap">{index + 1}</div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          ₴{pendingWithdrawals[index]?.amount}
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          <span className="py-[1px] px-[5px] bg-slate-300 text-blue-500 rounded-md text-sm">
-            {pendingWithdrawals[index]?.status}
-          </span>
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          {moment(pendingWithdrawals[index]?.createdAt).format("LL")}
-        </div>
-      </div>
-    );
-  };
-
-  const Rows = ({ index, style }) => {
-    return (
-      <div style={style} className="flex text-sm text-white font-medium">
-        <div className="w-[25%] p-2 whitespace-nowrap">{index + 1}</div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          ₴{successWithdrawals[index]?.amount}
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          <span className="py-[1px] px-[5px] bg-slate-300 text-blue-500 rounded-md text-sm">
-            {successWithdrawals[index]?.status}
-          </span>
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          {moment(successWithdrawals[index]?.createdAt).format("LL")}
-        </div>
-      </div>
-    );
-  };
-
   useEffect(() => {
-    dispatch(get_seller_payment_details(userInfo._id));
-  }, []);
+    if (!userInfo?._id) return;
+    setLoading(true);
+    dispatch(get_seller_payment_details(userInfo._id)).finally(() => setLoading(false));
+  }, [dispatch, userInfo?._id]);
 
   useEffect(() => {
     if (successMessage) {
@@ -98,134 +122,92 @@ const Payment = () => {
       toast.error(errorMessage);
       dispatch(messageClear());
     }
-  }, [successMessage, errorMessage]);
+  }, [successMessage, errorMessage, dispatch]);
 
   return (
-    <div className="px-2 md:px-7 py-5 ">
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-7 mb-5">
-        <div className="flex justify-between items-center p-5 bg-[#fae8e8] rounded-md gap-3">
-          <div className="flex flex-col justify-start items-start text-[#5c5a5a]">
-            <h2 className="text-2xl font-bold">₴{totalAmount}</h2>
-            <span className="text-sm font-bold">Загальні продажі</span>
-          </div>
-          <div className="w-[40px] h-[47px] rounded-full bg-[#fa0305] flex justify-center items-center text-xl">
-            <FaHryvniaSign className="text-[#fae8e8] shadow-lg" />
-          </div>
-        </div>
+    <div className="mx-auto w-full">
+      <PageHeader title="Платежі" description="Баланс, запити на виведення коштів та історія виплат." />
 
-        <div className="flex justify-between items-center p-5 bg-[#fde2ff] rounded-md gap-3">
-          <div className="flex flex-col justify-start items-start text-[#5c5a5a]">
-            <h2 className="text-2xl font-bold">₴{availableAmount}</h2>
-            <span className="text-sm font-bold">Доступна сума</span>
-          </div>
-          <div className="w-[40px] h-[47px] rounded-full bg-[#760077] flex justify-center items-center text-xl">
-            <FaHryvniaSign className="text-[#fae8e8] shadow-lg" />
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center p-5 bg-[#e9feea] rounded-md gap-3">
-          <div className="flex flex-col justify-start items-start text-[#5c5a5a]">
-            <h2 className="text-2xl font-bold">₴{withdrawalAmount}</h2>
-            <span className="text-sm font-bold">Надходження</span>
-          </div>
-          <div className="w-[40px] h-[47px] rounded-full bg-[#038000] flex justify-center items-center text-xl">
-            <FaHryvniaSign className="text-[#fae8e8] shadow-lg" />
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center p-5 bg-[#ecebff] rounded-md gap-3">
-          <div className="flex flex-col justify-start items-start text-[#5c5a5a]">
-            <h2 className="text-2xl font-bold">₴{pendingAmount}</h2>
-            <span className="text-sm font-bold">Очікувана сума</span>
-          </div>
-          <div className="w-[40px] h-[47px] rounded-full bg-[#0200f8] flex justify-center items-center text-xl">
-            <FaHryvniaSign className="text-[#fae8e8] shadow-lg" />
-          </div>
-        </div>
+      <div className="mb-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+        <KpiCard label="Загальні продажі" value={totalAmount} format="money" icon={<MdTrendingUp />} loading={loading} info="Сума всіх ваших продажів за весь час" />
+        <KpiCard label="Доступно до виведення" value={availableAmount} format="money" icon={<MdAccountBalanceWallet />} loading={loading} />
+        <KpiCard label="Виплачено" value={withdrawalAmount} format="money" icon={<MdPayments />} loading={loading} info="Сума успішно виведених коштів" />
+        <KpiCard label="Очікує виплати" value={pendingAmount} format="money" icon={<MdHourglassTop />} loading={loading} info="Сума запитів на виведення, що ще обробляються" />
       </div>
 
       {holdAmount > 0 && (
-        <p className="mb-5 text-sm text-[#d0d2d6]">
-          На утриманні: ₴{holdAmount} — кошти за замовленнями, які ще не доставлені
-          або у терміні повернення. Вони стануть доступними автоматично.
-        </p>
+        <div className="mb-5 flex min-w-0 items-start gap-3 rounded-(--r-lg) border border-(--warning)/30 bg-(--warning-soft) p-3 text-sm text-(--ink)">
+          <MdInfoOutline aria-hidden="true" className="mt-0.5 shrink-0 text-lg text-(--warning-ink)" />
+          <p className="min-w-0">
+            На утриманні: <b className="tabular-nums">{formatMoney(holdAmount)}</b> — кошти за замовленнями, які ще не доставлені або у терміні
+            повернення. Вони стануть доступними автоматично.
+          </p>
+        </div>
       )}
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-2 pb-4">
-        <div className="bg-[#6a5fdf] text-[#d0d2d6] rounded-md p-5">
-          <h2 className="text-lg">Надіслати запит</h2>
-          <div className="pt-5 mb-5">
-            <form onSubmit={sendRequest}>
-              <div className="flex gap-3 flex-wrap">
-                <input
-                  onChange={(e) => setAmount(e.target.value)}
-                  value={amount}
-                  min={0}
-                  type="number"
-                  className="px-3 py-2 md:w-[75%] focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-                  name="amount"
-                />
-                <button
-                  disabled={loader}
-                  className="bg-red-500 hover:shadow-red-500/40 hover:shadow-md text-white rounded-md px-7 py-2"
+      <div className="grid min-w-0 gap-4 sm:gap-5 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
+          <Card as="section">
+            <CardHeader title="Запит на виведення" description={`На балансі має залишитися більше ${formatMoney(MIN_REST)}.`} icon={<MdSend />} />
+            <CardBody>
+              <form onSubmit={sendRequest} noValidate className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <Field
+                  label="Сума, ₴"
+                  required
+                  error={touched ? amountError : ""}
+                  hint={
+                    maxAmount > 0 ? (
+                      <span>
+                        Можна вивести до <span className="tabular-nums">{formatMoney(maxAmount)}</span> ·{" "}
+                        <button
+                          type="button"
+                          className="font-medium text-(--brand-ink) underline-offset-2 hover:underline"
+                          onClick={() => setAmount(String(maxAmount))}
+                          disabled={loader}
+                        >
+                          Вказати максимум
+                        </button>
+                      </span>
+                    ) : (
+                      "Поки немає коштів для виведення"
+                    )
+                  }
+                  className="flex-1"
                 >
-                  {loader ? "Завантаження..." : "Надіслати"}
-                </button>
-              </div>
-            </form>
-          </div>
+                  <Input
+                    name="amount"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ""))}
+                    onBlur={() => amount && setTouched(true)}
+                    placeholder="0"
+                    disabled={loader}
+                  />
+                </Field>
+                <Button type="submit" icon={<MdSend />} loading={loader} disabled={maxAmount <= 0} className="sm:mt-7">
+                  Надіслати запит
+                </Button>
+              </form>
+            </CardBody>
+          </Card>
 
-          <div>
-            <h2 className="text-lg pb-4">Запит в очікуванні</h2>
-
-            <div className="size-full overflow-x-auto">
-              <div className="flex bg-[#a7a3de] uppercase text-xs font-bold min-w-[340px] rounded-md">
-                <div className="w-[25%] p-2">№</div>
-                <div className="w-[25%] p-2">Сума</div>
-                <div className="w-[25%] p-2">Статус</div>
-                <div className="w-[25%] p-2">Дата</div>
-              </div>
-              {
-                <List
-                  style={{ minWidth: "340px" }}
-                  className="List"
-                  height={350}
-                  itemCount={pendingWithdrawals.length}
-                  itemSize={35}
-                  outerElementType={outerElementType}
-                >
-                  {Row}
-                </List>
-              }
+          <Card as="section">
+            <CardHeader title="Запити в очікуванні" description={pendingWithdrawals.length ? `Кількість: ${pendingWithdrawals.length}` : undefined} icon={<MdHourglassTop />} />
+            <div className="mt-3">
+              <WithdrawTable rows={pendingWithdrawals} loading={loading} emptyTitle="Немає запитів в очікуванні" emptyText="Надіслані запити з'являться тут до виплати." />
             </div>
-          </div>
+          </Card>
         </div>
-        <div className="bg-[#6a5fdf] text-[#d0d2d6] rounded-md p-5">
-          <div>
-            <h2 className="text-lg pb-4">Успішне зняття коштів</h2>
 
-            <div className="size-full overflow-x-auto">
-              <div className="flex bg-[#a7a3de] uppercase text-xs font-bold min-w-[340px] rounded-md">
-                <div className="w-[25%] p-2">№</div>
-                <div className="w-[25%] p-2">Сума</div>
-                <div className="w-[25%] p-2">Статус</div>
-                <div className="w-[25%] p-2">Дата</div>
-              </div>
-              {
-                <List
-                  style={{ minWidth: "340px" }}
-                  className="List"
-                  height={350}
-                  itemCount={successWithdrawals.length}
-                  itemSize={35}
-                  outerElementType={outerElementType}
-                >
-                  {Rows}
-                </List>
-              }
-            </div>
+        <Card as="section">
+          <CardHeader title="Історія виплат" description={successWithdrawals.length ? `Кількість: ${successWithdrawals.length}` : undefined} icon={<MdHistory />} />
+          <div className="mt-3">
+            <WithdrawTable rows={successWithdrawals} loading={loading} emptyTitle="Виплат ще не було" emptyText="Успішні виведення коштів з'являться тут." />
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

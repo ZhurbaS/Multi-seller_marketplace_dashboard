@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { MdChat } from "react-icons/md";
 import api from "../../api/api";
+import { Card, CardHeader, CardBody, Switch, StatusChip, Skeleton } from "../../ui";
 
 const META = {
   whatsapp: {
@@ -20,15 +22,19 @@ const META = {
 const MessengersCard = () => {
   const [m, setM] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     api
       .get("/admin/settings/messengers")
       .then(({ data }) => setM(data.messengers))
-      .catch(() => toast.error("Не вдалося завантажити налаштування месенджерів"));
+      .catch(() => {
+        setFailed(true);
+        toast.error("Не вдалося завантажити налаштування месенджерів");
+      });
   }, []);
 
-  if (!m) return null;
+  if (failed) return null;
 
   const toggle = async (id) => {
     const next = Object.fromEntries(Object.keys(m).map((k) => [k, k === id ? !m[k].enabled : m[k].enabled]));
@@ -45,33 +51,37 @@ const MessengersCard = () => {
   };
 
   return (
-    <div className="w-full p-4 bg-[#6a5fdf] rounded-md text-[#d0d2d6] flex flex-col gap-3 max-w-[900px] mt-4">
-      <h2 className="text-lg font-semibold">Надсилання рахунку в месенджери</h2>
-      <p className="text-xs opacity-80">
-        За замовчуванням рахунок надсилається на e-mail. Увімкніть месенджер, щоб покупець міг обрати його на оформленні. Якщо ключі API не
-        задані, рахунок у месенджер надсилаєте ви вручну (в замовленні є кнопка «Відкрити чат» і PDF); коли ключі задано — відправка
-        автоматична, а у разі помилки рахунок іде на e-mail.
-      </p>
-      {Object.entries(META).map(([id, info]) => (
-        <div key={id} className="p-3 rounded-md bg-[#5b51c9] flex flex-col gap-1">
-          <label className="flex items-center gap-2 font-semibold">
-            <input type="checkbox" disabled={busy} checked={m[id].enabled} onChange={() => toggle(id)} />
-            {info.title}
-          </label>
-          <div className="text-xs">
-            Автоматична відправка:{" "}
-            <b className={m[id].configured ? "text-green-300" : "text-yellow-200"}>
-              {m[id].configured ? "налаштовано (працює)" : "не налаштовано — надсилаєте вручну"}
-            </b>
-          </div>
-          {!m[id].configured && (
-            <div className="text-xs opacity-80">
-              Змінні .env бекенда: <code>{info.env}</code>. Вебхук статусів: <code>{info.hook}</code>.
+    <Card>
+      <CardHeader
+        title="Надсилання рахунку в месенджери"
+        icon={<MdChat />}
+        description="За замовчуванням рахунок надсилається на e-mail. Увімкніть месенджер, щоб покупець міг обрати його на оформленні. Без ключів API рахунок надсилаєте ви вручну (у замовленні є «Відкрити чат» і PDF); з ключами — автоматично, а при помилці рахунок іде на e-mail."
+      />
+      <CardBody className="space-y-3">
+        {!m ? (
+          <>
+            <Skeleton height={64} rounded="md" />
+            <Skeleton height={64} rounded="md" />
+          </>
+        ) : (
+          Object.entries(META).map(([id, info]) => (
+            <div key={id} className="min-w-0 rounded-(--r-md) border border-(--line) p-3 sm:p-4">
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                <Switch checked={!!m[id]?.enabled} disabled={busy} onChange={() => toggle(id)} label={info.title} />
+                <StatusChip tone={m[id]?.configured ? "success" : "warning"}>
+                  {m[id]?.configured ? "Автовідправка налаштована" : "Надсилаєте вручну"}
+                </StatusChip>
+              </div>
+              {!m[id]?.configured && (
+                <p className="mt-2 break-words text-xs text-(--ink-2)">
+                  Змінні .env бекенда: <code className="break-all">{info.env}</code>. Вебхук статусів: <code>{info.hook}</code>.
+                </p>
+              )}
             </div>
-          )}
-        </div>
-      ))}
-    </div>
+          ))
+        )}
+      </CardBody>
+    </Card>
   );
 };
 

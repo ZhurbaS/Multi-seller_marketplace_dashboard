@@ -1,36 +1,52 @@
-import React, { forwardRef, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FixedSizeList as List } from "react-window";
+import toast from "react-hot-toast";
+import { MdPayments, MdCheck } from "react-icons/md";
 import {
   confirm_payment_request,
   get_payment_requests,
   messageClear,
 } from "../../store/Reducers/paymentSlice";
-import moment from "moment";
-import toast from "react-hot-toast";
+import {
+  PageHeader,
+  Table,
+  StatusChip,
+  Money,
+  Button,
+  Card,
+  Stat,
+  Pagination,
+  useConfirm,
+  formatDate,
+} from "../../ui";
 
-function handleOnWheel({ deltaY }) {
-  console.log("handleOnWheel", deltaY);
-}
-
-const outerElementType = forwardRef((props, ref) => (
-  <div ref={ref} onWheel={handleOnWheel} {...props} />
-));
+const STATUS = { pending: "Очікує підтвердження", success: "Виплачено" };
+const PER_PAGE = 20;
 
 const PaymentRequest = () => {
   const dispatch = useDispatch();
+  const [confirm, confirmEl] = useConfirm();
 
-  const { successMessage, errorMessage, pendingWithdrawals, loader } =
-    useSelector((state) => state.payment);
+  const { successMessage, errorMessage, pendingWithdrawals, loader } = useSelector((state) => state.payment);
   const [paymentId, setPaymentId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(get_payment_requests());
-  }, []);
+    setLoading(true);
+    Promise.resolve(dispatch(get_payment_requests())).finally(() => setLoading(false));
+  }, [dispatch]);
 
-  const confirm_request = (id) => {
-    setPaymentId(id);
-    dispatch(confirm_payment_request(id));
+  const confirm_request = async (w) => {
+    const ok = await confirm({
+      title: "Підтвердити виплату?",
+      text: `Підтвердіть, що кошти (${new Intl.NumberFormat("uk-UA").format(Number(w.amount) || 0)} ₴) переказано продавцю. Дію не можна скасувати.`,
+      confirmLabel: "Підтвердити виплату",
+      tone: "brand",
+    });
+    if (!ok) return;
+    setPaymentId(w._id);
+    dispatch(confirm_payment_request(w._id));
   };
 
   useEffect(() => {
@@ -42,68 +58,66 @@ const PaymentRequest = () => {
       toast.error(errorMessage);
       dispatch(messageClear());
     }
-  }, [successMessage, errorMessage]);
+  }, [successMessage, errorMessage, dispatch]);
 
-  const Row = ({ index, style }) => {
-    return (
-      <div style={style} className="flex text-sm text-white font-medium">
-        <div className="w-[25%] p-2 whitespace-nowrap">{index + 1}</div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          ₴{pendingWithdrawals[index]?.amount}
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          <span className="py-[1px] px-[5px] bg-slate-300 text-blue-500 rounded-md text-sm">
-            {pendingWithdrawals[index]?.status}
-          </span>
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          {moment(pendingWithdrawals[index]?.createdAt).format("LL")}
-        </div>
-        <div className="w-[25%] p-2 whitespace-nowrap">
-          <button
-            disabled={loader}
-            onClick={() => confirm_request(pendingWithdrawals[index]?._id)}
-            className="bg-indigo-500 shadow-lg hover:shadow-indigo-500/50 px-3 py-[2px] cursor-pointer text-white rounded-sm text-sm"
-          >
-            {loader && paymentId === pendingWithdrawals[index]?._id
-              ? "Завантаження..."
-              : "Підтвердити"}
-          </button>
-        </div>
-      </div>
-    );
-  };
+  const list = pendingWithdrawals || [];
+  const total = list.reduce((s, w) => s + (Number(w?.amount) || 0), 0);
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+  const cur = Math.min(page, pages);
+  const rows = list.slice((cur - 1) * PER_PAGE, cur * PER_PAGE);
+
+  const columns = [
+    { key: "no", header: "№", width: "4rem", hideOnCard: true, render: (_, i) => <span className="tabular-nums text-(--ink-2)">{(cur - 1) * PER_PAGE + i + 1}</span> },
+    { key: "amount", header: "Сума", primary: true, render: (w) => <Money value={w.amount} className="font-semibold" /> },
+    {
+      key: "status",
+      header: "Статус",
+      render: (w) => <StatusChip tone={w.status === "pending" ? "warning" : "success"}>{STATUS[w.status] || w.status || "—"}</StatusChip>,
+    },
+    { key: "createdAt", header: "Дата заявки", render: (w) => formatDate(w.createdAt, { withTime: true }) },
+    {
+      key: "action",
+      header: "Дія",
+      align: "right",
+      cardLabel: " ",
+      render: (w) => (
+        <Button
+          size="sm"
+          icon={<MdCheck />}
+          loading={loader && paymentId === w._id}
+          disabled={loader}
+          onClick={() => confirm_request(w)}
+        >
+          Підтвердити
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <div className="px-2 lg:px-7 pt-5">
-      <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-        <h2 className="text-xl font-medium pb-5 text-[#d0d2d6]">
-          Запит на списання
-        </h2>
-        <div className="w-full">
-          <div className="size-full overflow-x-auto">
-            <div className="flex bg-[#a7a3de] uppercase text-xs font-bold min-w-[340px] rounded-md">
-              <div className="w-[25%] p-2">№</div>
-              <div className="w-[25%] p-2">Сума</div>
-              <div className="w-[25%] p-2">Статус</div>
-              <div className="w-[25%] p-2">Дата</div>
-              <div className="w-[25%] p-2">Дія</div>
-            </div>
-            {
-              <List
-                style={{ minWidth: "340px" }}
-                className="List"
-                height={350}
-                itemCount={pendingWithdrawals.length}
-                itemSize={35}
-                outerElementType={outerElementType}
-              >
-                {Row}
-              </List>
-            }
-          </div>
+    <div>
+      <PageHeader
+        title="Заявки на виплату"
+        description="Запити продавців на виведення коштів. Підтверджуйте лише після фактичного переказу."
+        breadcrumbs={[{ label: "Огляд", to: "/admin/dashboard" }, { label: "Заявки на виплату" }]}
+      />
+
+      <Card padded className="mb-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Stat label="Заявок очікує" value={list.length} format="int" loading={loading && !list.length} icon={<MdPayments />} />
+          <Stat label="Сума до виплати" value={total} format="money" loading={loading && !list.length} />
         </div>
-      </div>
+      </Card>
+
+      <Table
+        caption="Заявки на виплату"
+        columns={columns}
+        rows={rows}
+        loading={loading && !list.length}
+        empty={{ icon: <MdPayments />, title: "Немає заявок на виплату", text: "Коли продавці запросять виведення коштів, заявки з'являться тут." }}
+      />
+      <Pagination page={cur} total={list.length} perPage={PER_PAGE} onChange={setPage} />
+      {confirmEl}
     </div>
   );
 };

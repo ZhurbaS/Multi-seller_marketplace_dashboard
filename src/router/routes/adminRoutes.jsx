@@ -14,9 +14,19 @@ const StoreDiscounts = lazy(() => import("../../views/admin/StoreDiscounts"));
 const Commission = lazy(() => import("../../views/admin/Commission"));
 const Company = lazy(() => import("../../views/admin/Company"));
 const Oferta = lazy(() => import("../../views/admin/Oferta"));
+const SiteDesign = lazy(() => import("../../views/admin/SiteDesign"));
+const StoreLocations = lazy(() => import("../../views/admin/StoreLocations"));
+const Storefront = lazy(() => import("../../views/admin/Storefront"));
+const Banners = lazy(() => import("../../views/admin/Banners"));
 const Coupons = lazy(() => import("../../views/admin/Coupons"));
 const Returns = lazy(() => import("../../views/admin/Returns"));
 const ReturnsSettings = lazy(() => import("../../views/admin/ReturnsSettings"));
+const Crm = lazy(() => import("../../views/admin/marketing/Crm"));
+const Segments = lazy(() => import("../../views/admin/marketing/Segments"));
+const Campaigns = lazy(() => import("../../views/admin/marketing/Campaigns"));
+const CampaignPage = lazy(() => import("../../views/admin/marketing/CampaignPage"));
+const Automations = lazy(() => import("../../views/admin/marketing/Automations"));
+const SubscriptionAnalytics = lazy(() => import("../../views/admin/marketing/SubscriptionAnalytics"));
 
 export const adminRoutes = [
   {
@@ -110,8 +120,63 @@ export const adminRoutes = [
     role: "admin",
   },
   {
+    path: "admin/dashboard/site-design",
+    element: <SiteDesign />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/stores",
+    element: <StoreLocations />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/storefront",
+    element: <Storefront />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/banners",
+    element: <Banners />,
+    role: "admin",
+  },
+  {
     path: "admin/dashboard/company",
     element: <Company />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/crm",
+    element: <Crm />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/segments",
+    element: <Segments />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/campaigns",
+    element: <Campaigns />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/campaigns/new",
+    element: <CampaignPage />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/campaigns/:id",
+    element: <CampaignPage />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/automations",
+    element: <Automations />,
+    role: "admin",
+  },
+  {
+    path: "admin/dashboard/subscription-analytics",
+    element: <SubscriptionAnalytics />,
     role: "admin",
   },
 ];

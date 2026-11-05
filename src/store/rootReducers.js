@@ -9,6 +9,8 @@ import productSlice from "./Reducers/productSlice";
 import sellerSlice from "./Reducers/sellerSlice";
 import reviewSlice from "./Reducers/reviewSlice";
 import settingsSlice from "./Reducers/settingsSlice";
+import sellerAnalyticsSlice from "./Reducers/sellerAnalyticsSlice";
+import adminAnalyticsSlice from "./Reducers/adminAnalyticsSlice";
 
 const rootReducer = {
   auth: authSlice,
@@ -22,6 +24,8 @@ const rootReducer = {
   banner: bannerSlice,
   review: reviewSlice,
   settings: settingsSlice,
+  sellerAnalytics: sellerAnalyticsSlice,
+  adminAnalytics: adminAnalyticsSlice,
 };
 
 export default rootReducer;

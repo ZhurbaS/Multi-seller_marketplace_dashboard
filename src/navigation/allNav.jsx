@@ -1,6 +1,6 @@
 import { AiOutlineDashboard, AiOutlineShoppingCart } from "react-icons/ai";
 import { BiCategory } from "react-icons/bi";
-import { FaUsers, FaUserTimes } from "react-icons/fa";
+import { FaUsers, FaUserTimes, FaAddressBook, FaLayerGroup, FaPaperPlane, FaRobot, FaChartPie } from "react-icons/fa";
 import { MdPayment } from "react-icons/md";
 import { FaCodePullRequest } from "react-icons/fa6";
 import { IoIosChatbubbles } from "react-icons/io";
@@ -16,6 +16,23 @@ import { MdRateReview } from "react-icons/md";
 import { MdAssignmentReturn } from "react-icons/md";
 import { RiCouponLine } from "react-icons/ri";
 import { MdGavel } from "react-icons/md";
+import { MdPalette } from "react-icons/md";
+import { MdStorefront, MdOutlineDashboardCustomize, MdViewCarousel } from "react-icons/md";
+import {
+  MdInsights,
+  MdShowChart,
+  MdInventory2,
+  MdWarehouse,
+  MdLocalShipping,
+  MdStarRate,
+  MdPeopleAlt,
+  MdFilterAlt,
+  MdCampaign,
+  MdFactCheck,
+} from "react-icons/md";
+
+// Пункти меню. group — заголовок секції в Sidebar (групи впорядковуються за першою появою).
+// Активний пункт — найдовший path, з якого починається поточний URL.
 
 export const allNav = [
   {
@@ -23,6 +40,7 @@ export const allNav = [
     title: "Панель керування",
     icon: <AiOutlineDashboard />,
     role: "admin",
+    group: "Головне",
     path: "/admin/dashboard",
   },
   {
@@ -30,6 +48,7 @@ export const allNav = [
     title: "Замовлення",
     icon: <AiOutlineShoppingCart />,
     role: "admin",
+    group: "Продажі",
     path: "/admin/dashboard/orders",
   },
   {
@@ -37,6 +56,7 @@ export const allNav = [
     title: "Категорія",
     icon: <BiCategory />,
     role: "admin",
+    group: "Каталог",
     path: "/admin/dashboard/category",
   },
   {
@@ -44,6 +64,7 @@ export const allNav = [
     title: "Продавці",
     icon: <FaUsers />,
     role: "admin",
+    group: "Продавці",
     path: "/admin/dashboard/sellers",
   },
   {
@@ -51,6 +72,7 @@ export const allNav = [
     title: "Запит на оплату",
     icon: <MdPayment />,
     role: "admin",
+    group: "Продавці",
     path: "/admin/dashboard/payment-request",
   },
   {
@@ -58,6 +80,7 @@ export const allNav = [
     title: "Неактивні продавці",
     icon: <FaUserTimes />,
     role: "admin",
+    group: "Продавці",
     path: "/admin/dashboard/deactive-sellers",
   },
   {
@@ -65,6 +88,7 @@ export const allNav = [
     title: "Запит продавця",
     icon: <FaCodePullRequest />,
     role: "admin",
+    group: "Продавці",
     path: "/admin/dashboard/sellers-request",
   },
   {
@@ -72,6 +96,7 @@ export const allNav = [
     title: "Онлайн-чат",
     icon: <IoIosChatbubbles />,
     role: "admin",
+    group: "Продавці",
     path: "/admin/dashboard/chat-sellers",
   },
   {
@@ -79,6 +104,7 @@ export const allNav = [
     title: "Відгуки",
     icon: <MdRateReview />,
     role: "admin",
+    group: "Продажі",
     path: "/admin/dashboard/reviews",
   },
   {
@@ -86,6 +112,7 @@ export const allNav = [
     title: "Реквізити для рахунків",
     icon: <MdPayment />,
     role: "admin",
+    group: "Сайт",
     path: "/admin/dashboard/company",
   },
   {
@@ -93,13 +120,47 @@ export const allNav = [
     title: "Юридичні документи",
     icon: <MdGavel />,
     role: "admin",
+    group: "Сайт",
     path: "/admin/dashboard/oferta",
+  },
+  {
+    id: 31,
+    title: "Дизайн сайту",
+    icon: <MdPalette />,
+    role: "admin",
+    group: "Сайт",
+    path: "/admin/dashboard/site-design",
+  },
+  {
+    id: 32,
+    title: "Магазини",
+    icon: <MdStorefront />,
+    role: "admin",
+    group: "Сайт",
+    path: "/admin/dashboard/stores",
+  },
+  {
+    id: 33,
+    title: "Вітрина",
+    icon: <MdOutlineDashboardCustomize />,
+    role: "admin",
+    group: "Сайт",
+    path: "/admin/dashboard/storefront",
+  },
+  {
+    id: 34,
+    title: "Банери",
+    icon: <MdViewCarousel />,
+    role: "admin",
+    group: "Сайт",
+    path: "/admin/dashboard/banners",
   },
   {
     id: 19,
     title: "Знижки магазину",
     icon: <TbShoppingCartDiscount />,
     role: "admin",
+    group: "Каталог",
     path: "/admin/dashboard/discounts",
   },
   {
@@ -107,6 +168,7 @@ export const allNav = [
     title: "Комісії і виплати",
     icon: <MdPayment />,
     role: "admin",
+    group: "Продавці",
     path: "/admin/dashboard/commission",
   },
   {
@@ -114,6 +176,7 @@ export const allNav = [
     title: "Купони",
     icon: <RiCouponLine />,
     role: "admin",
+    group: "Каталог",
     path: "/admin/dashboard/coupons",
   },
   {
@@ -121,6 +184,7 @@ export const allNav = [
     title: "Повернення",
     icon: <MdAssignmentReturn />,
     role: "admin",
+    group: "Продажі",
     path: "/admin/dashboard/returns",
   },
   {
@@ -128,20 +192,136 @@ export const allNav = [
     title: "Умови повернення",
     icon: <MdAssignmentReturn />,
     role: "admin",
+    group: "Продажі",
     path: "/admin/dashboard/returns-settings",
   },
   {
+    id: 35,
+    title: "Клієнти (CRM)",
+    icon: <FaAddressBook />,
+    role: "admin",
+    group: "Маркетинг",
+    path: "/admin/dashboard/crm",
+  },
+  {
+    id: 36,
+    title: "Сегменти",
+    icon: <FaLayerGroup />,
+    role: "admin",
+    group: "Маркетинг",
+    path: "/admin/dashboard/segments",
+  },
+  {
+    id: 37,
+    title: "Розсилки",
+    icon: <FaPaperPlane />,
+    role: "admin",
+    group: "Маркетинг",
+    path: "/admin/dashboard/campaigns",
+  },
+  {
+    id: 38,
+    title: "Автоматизації",
+    icon: <FaRobot />,
+    role: "admin",
+    group: "Маркетинг",
+    path: "/admin/dashboard/automations",
+  },
+  {
+    id: 39,
+    title: "Підписка: аналітика",
+    icon: <FaChartPie />,
+    role: "admin",
+    group: "Маркетинг",
+    path: "/admin/dashboard/subscription-analytics",
+  },
+  // ===== Продавець: Аналітика =====
+  {
     id: 9,
-    title: "Панель керування",
-    icon: <AiOutlineDashboard />,
+    title: "Огляд",
+    icon: <MdInsights />,
     role: "seller",
+    group: "Аналітика",
     path: "/seller/dashboard",
+  },
+  {
+    id: 50,
+    title: "Продажі",
+    icon: <MdShowChart />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/sales",
+  },
+  {
+    id: 51,
+    title: "Товари",
+    icon: <MdInventory2 />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/products",
+  },
+  {
+    id: 52,
+    title: "Залишки",
+    icon: <MdWarehouse />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/inventory",
+  },
+  {
+    id: 53,
+    title: "Виконання",
+    icon: <MdLocalShipping />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/fulfillment",
+  },
+  {
+    id: 54,
+    title: "Відгуки",
+    icon: <MdStarRate />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/reviews",
+  },
+  {
+    id: 55,
+    title: "Покупці",
+    icon: <MdPeopleAlt />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/customers",
+  },
+  {
+    id: 56,
+    title: "Воронка та трафік",
+    icon: <MdFilterAlt />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/funnel",
+  },
+  {
+    id: 57,
+    title: "Маркетинг",
+    icon: <MdCampaign />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/marketing",
+  },
+  {
+    id: 58,
+    title: "Якість карток",
+    icon: <MdFactCheck />,
+    role: "seller",
+    group: "Аналітика",
+    path: "/seller/analytics/quality",
   },
   {
     id: 10,
     title: "Додати товар",
     icon: <MdAddShoppingCart />,
     role: "seller",
+    group: "Товари",
     path: "/seller/dashboard/add-product",
   },
   {
@@ -149,6 +329,7 @@ export const allNav = [
     title: "Усі товари",
     icon: <RiLuggageCartFill />,
     role: "seller",
+    group: "Товари",
     path: "/seller/dashboard/products",
   },
   {
@@ -156,6 +337,7 @@ export const allNav = [
     title: "Товари з знижкою",
     icon: <TbShoppingCartDiscount />,
     role: "seller",
+    group: "Товари",
     path: "/seller/dashboard/discount-product",
   },
   {
@@ -163,6 +345,7 @@ export const allNav = [
     title: "Замовлення",
     icon: <BsCartCheck />,
     role: "seller",
+    group: "Продажі",
     path: "/seller/dashboard/orders",
   },
   {
@@ -170,6 +353,7 @@ export const allNav = [
     title: "Платежі",
     icon: <MdOutlinePayments />,
     role: "seller",
+    group: "Продажі",
     path: "/seller/dashboard/payments",
   },
   {
@@ -177,6 +361,7 @@ export const allNav = [
     title: "Повернення",
     icon: <MdAssignmentReturn />,
     role: "seller",
+    group: "Продажі",
     path: "/seller/dashboard/returns",
   },
   {
@@ -184,6 +369,7 @@ export const allNav = [
     title: "Чат з клієнтом",
     icon: <IoMdChatboxes />,
     role: "seller",
+    group: "Спілкування",
     path: "/seller/dashboard/chat-customer",
   },
   {
@@ -191,6 +377,7 @@ export const allNav = [
     title: "Чат з підтримкою",
     icon: <RiChatSettingsFill />,
     role: "seller",
+    group: "Спілкування",
     path: "/seller/dashboard/chat-support",
   },
   {
@@ -198,6 +385,7 @@ export const allNav = [
     title: "Профіль",
     icon: <CgProfile />,
     role: "seller",
+    group: "Акаунт",
     path: "/seller/dashboard/profile",
   },
 ];

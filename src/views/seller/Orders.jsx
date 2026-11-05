@@ -1,135 +1,104 @@
-import React, { useEffect, useState } from "react";
-import Search from "../components/Search";
-import { Link } from "react-router-dom";
-import Pagination from "../Pagination";
-import { FaEdit, FaEye } from "react-icons/fa";
-import { FaTrash } from "react-icons/fa6";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { MdChevronRight, MdReceiptLong } from "react-icons/md";
 import { get_seller_orders } from "../../store/Reducers/orderSlice";
-import { payLabel, deliveryLabel } from "../../utils/statusLabels";
+import { formatDateTime } from "../../utils/statusLabels";
+import { IconButton, Money, PageHeader, Pagination, Select, Table, Toolbar } from "../../ui";
+import { DeliveryChip, PaymentChip } from "../../components/seller/OrderStatus";
+import { shortId } from "../../components/seller/orderStatusUtils";
+import { PER_PAGE_OPTIONS } from "../../components/seller/listUtils";
 
 const Orders = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const { userInfo } = useSelector((state) => state.auth);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchValue, setSearchValue] = useState("");
-  const [perPage, setPerPage] = useState(5);
+  // Пошук на сервері для замовлень продавця не реалізовано — передаємо порожній рядок, як і раніше за замовчуванням.
+  const searchValue = "";
+  const [perPage, setPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
   const { totalOrderCount, myOrdersArr } = useSelector((state) => state.order);
 
   useEffect(() => {
+    if (!userInfo?._id) return;
     const obj = {
       perPage: parseInt(perPage),
       page: parseInt(currentPage),
       searchValue,
       sellerId: userInfo._id,
     };
-    dispatch(get_seller_orders(obj));
-  }, [searchValue, currentPage, perPage]);
+    setLoading(true);
+    dispatch(get_seller_orders(obj)).finally(() => setLoading(false));
+  }, [currentPage, perPage, userInfo?._id, dispatch]);
+
+  const detailsUrl = (d) => `/seller/dashboard/orders/details/${d._id}`;
+  const units = (d) => (Array.isArray(d.products) ? d.products.reduce((s, p) => s + (Number(p.quantity) || 0), 0) : 0);
+
+  const columns = [
+    {
+      key: "_id",
+      header: "Замовлення",
+      primary: true,
+      render: (d) => (
+        <div className="min-w-0">
+          <Link to={detailsUrl(d)} onClick={(e) => e.stopPropagation()} className="font-semibold text-(--ink) tabular-nums hover:text-(--brand-ink) hover:underline">
+            {shortId(d._id)}
+          </Link>
+          <p className="text-xs text-(--ink-2)">{d.createdAt ? formatDateTime(d.createdAt) : d.date}</p>
+        </div>
+      ),
+    },
+    { key: "units", header: "Товарів", align: "right", render: (d) => `${units(d)} шт` },
+    { key: "price", header: "Сума", align: "right", render: (d) => <Money value={d.price} className="font-semibold" /> },
+    { key: "payment_status", header: "Оплата", render: (d) => <PaymentChip status={d.payment_status} /> },
+    { key: "delivery_status", header: "Статус", render: (d) => <DeliveryChip status={d.delivery_status} /> },
+    {
+      key: "actions",
+      header: <span className="sr-only">Дії</span>,
+      hideOnCard: true,
+      align: "right",
+      render: (d) => <IconButton as={Link} to={detailsUrl(d)} icon={<MdChevronRight />} label={`Деталі замовлення ${shortId(d._id)}`} onClick={(e) => e.stopPropagation()} />,
+    },
+  ];
 
   return (
-    <div className="px-2 lg:px-7 pt-5">
-      <h1 className="text-[#000000] font-semibold text-lg mb-3">Замовлення</h1>
-      <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-        <Search
-          setPerPage={setPerPage}
-          setSearchValue={setSearchValue}
-          searchValue={searchValue}
+    <div className="mx-auto w-full">
+      <PageHeader
+        title="Замовлення"
+        description={totalOrderCount ? `Усього замовлень: ${totalOrderCount}` : "Замовлення покупців на ваші товари"}
+      />
+
+      <Toolbar className="mb-4 justify-end">
+        <Select
+          aria-label="Кількість на сторінці"
+          size="sm"
+          value={perPage}
+          onChange={(e) => {
+            setPerPage(parseInt(e.target.value));
+            setCurrentPage(1);
+          }}
+          options={PER_PAGE_OPTIONS}
+          className="w-full sm:w-48"
         />
+      </Toolbar>
 
-        <div className="relative overflow-x-auto nmt-5">
-          <table className="w-full text-sm text-left text-[#d0d2d6]">
-            <thead className="text-sm text-[#d0d2d6] uppercase border-b border-slate-700 ">
-              <tr>
-                <th scope="col" className="py-3 px-4">
-                  Id замовлення
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Дата
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Ціна
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Статус оплати
-                </th>
-                <th scope="col" className="py-3 px-4">
-                  Статус замовлення
-                </th>
+      <Table
+        caption="Замовлення"
+        columns={columns}
+        rows={myOrdersArr}
+        loading={loading && myOrdersArr.length === 0}
+        onRowClick={(d) => navigate(detailsUrl(d))}
+        empty={{
+          icon: <MdReceiptLong />,
+          title: "Замовлень поки немає",
+          text: "Щойно покупець оформить замовлення на ваш товар, воно з'явиться тут.",
+        }}
+        className={loading && myOrdersArr.length > 0 ? "opacity-60 transition-opacity" : undefined}
+      />
 
-                <th scope="col" className="py-3 px-4">
-                  Дія
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {myOrdersArr.map((d, i) => (
-                <tr key={d._id}>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    №{d._id}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {d.date}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    ₴{d.price}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {payLabel(d.payment_status)}
-                  </td>
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    {deliveryLabel(d.delivery_status)}
-                  </td>
-
-                  <td
-                    scope="row"
-                    className="py-1 px-4 font-medium whitespace-nowrap"
-                  >
-                    <div className="flex justify-start items-center gap-4">
-                      <Link
-                        to={`/seller/dashboard/orders/details/${d._id}`}
-                        className="p-[6px] bg-green-500 rounded hover:shadow-lg hover:shadow-green-500/50  "
-                      >
-                        <FaEye />
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {totalOrderCount <= perPage ? (
-          ""
-        ) : (
-          <div className="w-full flex justify-end mt-4 bottom-4 right-4">
-            <Pagination
-              pageNumber={currentPage}
-              setPageNumber={setCurrentPage}
-              totalItem={totalOrderCount}
-              perPage={perPage}
-              showItem={3}
-            />
-          </div>
-        )}
-      </div>
+      <Pagination page={currentPage} total={totalOrderCount} perPage={perPage} onChange={setCurrentPage} />
     </div>
   );
 };

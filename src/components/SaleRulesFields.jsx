@@ -1,210 +1,161 @@
-import React from "react";
+import { MdAdd, MdDeleteOutline } from "react-icons/md";
+import { Button, Checkbox, Field, IconButton, Input } from "../ui";
+
+// Хелпери (defaultRules, rulesFromProduct, rulesToPayload, appendRulesToFormData, validateRules) — у ./saleRules.js
 
 // Умови продажу товару: упаковки/комплекти (мін. замовлення і крок), знижки за кількість,
 // терміни поставки й передзамовлення. Використовується у формах додавання й редагування.
 
-export const defaultRules = {
-  minOrderQty: "1",
-  orderStep: "1",
-  packLabel: "",
-  priceTiers: [],
-  restockDaysMin: "",
-  restockDaysMax: "",
-  allowPreorder: false,
-};
-
-export const rulesFromProduct = (p = {}) => ({
-  minOrderQty: String(p.minOrderQty || 1),
-  orderStep: String(p.orderStep || 1),
-  packLabel: p.packLabel || "",
-  priceTiers: (p.priceTiers || []).map((t) => ({
-    minQty: String(t.minQty),
-    percent: String(t.percent),
-  })),
-  restockDaysMin: p.restockDaysMin ? String(p.restockDaysMin) : "",
-  restockDaysMax: p.restockDaysMax ? String(p.restockDaysMax) : "",
-  allowPreorder: !!p.allowPreorder,
-});
-
-// Для JSON-запиту (редагування)
-export const rulesToPayload = (r) => ({
-  minOrderQty: r.minOrderQty,
-  orderStep: r.orderStep,
-  packLabel: r.packLabel,
-  priceTiers: r.priceTiers.filter((t) => t.minQty !== "" || t.percent !== ""),
-  restockDaysMin: r.restockDaysMin,
-  restockDaysMax: r.restockDaysMax,
-  allowPreorder: r.allowPreorder,
-});
-
-// Для multipart-форми (додавання)
-export const appendRulesToFormData = (fd, r) => {
-  const p = rulesToPayload(r);
-  fd.append("minOrderQty", p.minOrderQty);
-  fd.append("orderStep", p.orderStep);
-  fd.append("packLabel", p.packLabel);
-  fd.append("priceTiers", JSON.stringify(p.priceTiers));
-  fd.append("restockDaysMin", p.restockDaysMin);
-  fd.append("restockDaysMax", p.restockDaysMax);
-  fd.append("allowPreorder", String(p.allowPreorder));
-};
-
-const inputCls =
-  "px-3 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6] w-full";
-
-const SaleRulesFields = ({ rules, onChange }) => {
+/**
+ * Поля «Умови продажу». rules/onChange — як раніше; errors — результат validateRules (показується інлайн).
+ */
+const SaleRulesFields = ({ rules, onChange, errors = {}, disabled = false }) => {
   const set = (patch) => onChange({ ...rules, ...patch });
 
   const setTier = (i, field, value) => {
-    const tiers = rules.priceTiers.map((t, idx) =>
-      idx === i ? { ...t, [field]: value } : t
-    );
+    const tiers = rules.priceTiers.map((t, idx) => (idx === i ? { ...t, [field]: value } : t));
     set({ priceTiers: tiers });
   };
 
   return (
-    <div className="mb-3 p-3 border border-slate-600 rounded-md text-[#d0d2d6] flex flex-col gap-4">
-      <h2 className="font-semibold text-lg">Умови продажу</h2>
-
-      <div>
-        <p className="text-sm mb-2 opacity-80">
-          Ціна й кількість на складі — за 1 шт. Для упаковок і комплектів задайте
-          мінімальне замовлення й крок: наприклад, «мін. 100, крок 100» — покупець
-          зможе замовити лише 100, 200, 300 шт.
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-(--ink-2)">
+          Ціна й кількість на складі — за 1 шт. Для упаковок і комплектів задайте мінімальне замовлення й крок:
+          наприклад, «мін. 100, крок 100» — покупець зможе замовити лише 100, 200, 300 шт.
         </p>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex flex-col gap-1 w-full">
-            <label>Мінімальне замовлення, шт</label>
-            <input
-              className={inputCls}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Field label="Мінімальне замовлення, шт" error={errors.minOrderQty}>
+            <Input
               type="number"
+              inputMode="numeric"
               min="1"
+              step="1"
+              disabled={disabled}
               value={rules.minOrderQty}
               onChange={(e) => set({ minOrderQty: e.target.value })}
             />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label>Крок (кратність), шт</label>
-            <input
-              className={inputCls}
+          </Field>
+          <Field label="Крок (кратність), шт" error={errors.orderStep}>
+            <Input
               type="number"
+              inputMode="numeric"
               min="1"
+              step="1"
+              disabled={disabled}
               value={rules.orderStep}
               onChange={(e) => set({ orderStep: e.target.value })}
             />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label>Підпис для покупця (необов'язково)</label>
-            <input
-              className={inputCls}
+          </Field>
+          <Field label="Підпис для покупця" hint={`Необов'язково · ${rules.packLabel.length} / 60`}>
+            <Input
               type="text"
               maxLength={60}
+              autoComplete="off"
+              disabled={disabled}
               placeholder="Упаковка по 100 шт"
               value={rules.packLabel}
               onChange={(e) => set({ packLabel: e.target.value })}
             />
-          </div>
+          </Field>
         </div>
       </div>
 
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="font-semibold">Знижки за кількість</label>
-          <button
-            type="button"
-            onClick={() =>
-              set({ priceTiers: [...rules.priceTiers, { minQty: "", percent: "" }] })
-            }
-            className="px-3 py-1 bg-blue-500 text-white rounded-sm text-sm"
+      <fieldset className="flex min-w-0 flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <legend className="text-sm font-semibold text-(--ink)">Знижки за кількість</legend>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<MdAdd />}
+            disabled={disabled}
+            onClick={() => set({ priceTiers: [...rules.priceTiers, { minQty: "", percent: "" }] })}
           >
-            + Додати поріг
-          </button>
+            Додати поріг
+          </Button>
         </div>
         {rules.priceTiers.length === 0 && (
-          <p className="text-sm opacity-70">
-            Без знижок за кількість. Приклад: від 10 шт — 5%, від 50 шт — 10%.
+          <p className="rounded-(--r-md) border border-dashed border-(--line) bg-(--surface-2) px-3 py-2.5 text-sm text-(--ink-2)">
+            Без знижок за кількість. Приклад: від 10 шт — 5 %, від 50 шт — 10 %.
           </p>
         )}
         {rules.priceTiers.map((t, i) => (
-          <div key={i} className="flex gap-3 mb-2 items-center">
-            <span className="text-sm whitespace-nowrap">від</span>
-            <input
-              className={inputCls}
-              type="number"
-              min="2"
-              placeholder="шт"
-              value={t.minQty}
-              onChange={(e) => setTier(i, "minQty", e.target.value)}
+          <div key={i} className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-3">
+            <Field label={`Від, шт`} error={errors[`tier${i}minQty`]}>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min="2"
+                placeholder="10"
+                disabled={disabled}
+                value={t.minQty}
+                onChange={(e) => setTier(i, "minQty", e.target.value)}
+              />
+            </Field>
+            <Field label="Знижка, %" error={errors[`tier${i}percent`]}>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min="1"
+                max="90"
+                placeholder="5"
+                disabled={disabled}
+                value={t.percent}
+                onChange={(e) => setTier(i, "percent", e.target.value)}
+              />
+            </Field>
+            <IconButton
+              icon={<MdDeleteOutline />}
+              label={`Видалити поріг ${i + 1}`}
+              disabled={disabled}
+              className="mt-7 text-(--danger)"
+              onClick={() => set({ priceTiers: rules.priceTiers.filter((_, idx) => idx !== i) })}
             />
-            <span className="text-sm whitespace-nowrap">шт — знижка</span>
-            <input
-              className={inputCls}
-              type="number"
-              min="1"
-              max="90"
-              placeholder="%"
-              value={t.percent}
-              onChange={(e) => setTier(i, "percent", e.target.value)}
-            />
-            <span className="text-sm">%</span>
-            <button
-              type="button"
-              onClick={() =>
-                set({ priceTiers: rules.priceTiers.filter((_, idx) => idx !== i) })
-              }
-              className="px-3 py-1 bg-red-500 text-white rounded-sm text-sm"
-            >
-              ✕
-            </button>
           </div>
         ))}
         {rules.priceTiers.length > 0 && (
-          <p className="text-xs opacity-70">
+          <p className="text-xs text-(--ink-2)">
             Знижка додається до знижки самого товару. Відсоток має зростати разом з кількістю.
           </p>
         )}
-      </div>
+      </fieldset>
 
-      <div>
-        <label className="font-semibold">Коли товару немає в наявності</label>
-        <p className="text-sm mb-2 opacity-80">
-          Покупець побачить «Очікується через …» і зможе підписатися на сповіщення.
-        </p>
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex flex-col gap-1 w-full">
-            <label>Очікуваний термін поставки: від, днів</label>
-            <input
-              className={inputCls}
+      <fieldset className="flex min-w-0 flex-col gap-3">
+        <legend className="text-sm font-semibold text-(--ink)">Коли товару немає в наявності</legend>
+        <p className="text-sm text-(--ink-2)">Покупець побачить «Очікується через …» і зможе підписатися на сповіщення.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Термін поставки: від, днів" error={errors.restockDaysMin}>
+            <Input
               type="number"
+              inputMode="numeric"
               min="1"
               max="365"
               placeholder="20"
+              disabled={disabled}
               value={rules.restockDaysMin}
               onChange={(e) => set({ restockDaysMin: e.target.value })}
             />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label>до, днів</label>
-            <input
-              className={inputCls}
+          </Field>
+          <Field label="до, днів" error={errors.restockDaysMax}>
+            <Input
               type="number"
+              inputMode="numeric"
               min="1"
               max="365"
               placeholder="30"
+              disabled={disabled}
               value={rules.restockDaysMax}
               onChange={(e) => set({ restockDaysMax: e.target.value })}
             />
-          </div>
-          <label className="flex items-center gap-2 w-full pb-2">
-            <input
-              type="checkbox"
-              checked={rules.allowPreorder}
-              onChange={(e) => set({ allowPreorder: e.target.checked })}
-            />
-            Приймати передзамовлення, поки товару немає
-          </label>
+          </Field>
         </div>
-      </div>
+        <Checkbox
+          label="Приймати передзамовлення, поки товару немає"
+          checked={rules.allowPreorder}
+          disabled={disabled}
+          onChange={(e) => set({ allowPreorder: e.target.checked })}
+        />
+      </fieldset>
     </div>
   );
 };

@@ -1,27 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import Pagination from "../Pagination";
-import { FaEdit } from "react-icons/fa";
-import { FaTrash, FaImage } from "react-icons/fa6";
-import { IoMdCloseCircle } from "react-icons/io";
-import { PropagateLoader } from "react-spinners";
-import { overrideStyle } from "../../utils/utils";
+import { MdAdd, MdCategory, MdDeleteOutline, MdEdit } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import {
   categoryAdd,
   messageClear,
   get_category,
   updateCategory,
-  deleteCategory
+  deleteCategory,
 } from "./../../store/Reducers/categorySlice";
-import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
-import Search from "./../components/Search";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Drawer,
+  Field,
+  FilterBar,
+  IconButton,
+  Input,
+  PageHeader,
+  Pagination,
+  Select,
+  Table,
+  useConfirm,
+} from "../../ui";
+import ImageDropzone from "../../components/admin/ImageDropzone";
+
+const EMPTY = { name: "", image: "" };
+const PER_PAGE_OPTIONS = [5, 10, 20].map((n) => ({ value: n, label: `${n} на сторінці` }));
 
 const Category = () => {
   const dispatch = useDispatch();
-  const { loader, successMessage, errorMessage, categories } = useSelector(
-    (state) => state.category
-  );
+  const { loader, successMessage, errorMessage, categories, totalCategory } = useSelector((state) => state.category);
+  const [confirm, confirmEl] = useConfirm();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
@@ -30,49 +42,51 @@ const Category = () => {
   const [imageShow, setImage] = useState("");
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [listLoading, setListLoading] = useState(true);
+  const [errors, setErrors] = useState({});
 
-  const [state, setState] = useState({
-    name: "",
-    image: "",
-  });
+  const [state, setState] = useState(EMPTY);
 
-  const imageHandle = (e) => {
-    let files = e.target.files;
-    if (files.length > 0) {
-      setImage(URL.createObjectURL(files[0]));
-      setState({
-        ...state,
-        image: files[0],
-      });
-    }
+  const resetForm = () => {
+    setState(EMPTY);
+    setImage("");
+    setIsEdit(false);
+    setEditId(null);
+    setErrors({});
+  };
+
+  const onFile = (file) => {
+    setImage(URL.createObjectURL(file));
+    setState((s) => ({ ...s, image: file }));
+    setErrors((e) => ({ ...e, image: "" }));
   };
 
   const addOrUpdateCategory = (e) => {
     e.preventDefault();
+    const next = {};
+    if (!state.name.trim()) next.name = "Вкажіть назву категорії";
+    if (!isEdit && !state.image) next.image = "Додайте зображення категорії";
+    setErrors(next);
+    if (Object.keys(next).length) return;
     if (isEdit) {
       dispatch(updateCategory({ id: editId, ...state }));
     } else {
       dispatch(categoryAdd(state));
     }
-    // console.log(state);
   };
 
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage);
       dispatch(messageClear());
-      setState({
-        name: "",
-        image: "",
-      });
-      setImage("");
-      setIsEdit(false);
-      setEditId(null);
+      resetForm();
+      setShow(false);
     }
     if (errorMessage) {
-      toast.error(errorMessage);
+      toast.error(typeof errorMessage === "string" ? errorMessage : errorMessage?.error || "Сталася помилка");
       dispatch(messageClear());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successMessage, errorMessage]);
 
   useEffect(() => {
@@ -81,206 +95,169 @@ const Category = () => {
       page: parseInt(currentPage),
       searchValue,
     };
-    dispatch(get_category(obj));
-  }, [searchValue, currentPage, perPage]);
+    setListLoading(true);
+    Promise.resolve(dispatch(get_category(obj))).finally(() => setListLoading(false));
+  }, [searchValue, currentPage, perPage, dispatch]);
 
   const handleEdit = (category) => {
-    setState({
-      name: category.name,
-      image: category.image,
-    });
+    setState({ name: category.name, image: category.image });
     setImage(category.image);
     setEditId(category._id);
     setIsEdit(true);
+    setErrors({});
+    // На ≥lg форма вже видима праворуч — drawer лише для мобільних.
+    const wide = typeof window !== "undefined" && window.matchMedia?.("(min-width: 1024px)").matches;
+    setShow(!wide);
+  };
+
+  const openNew = () => {
+    resetForm();
     setShow(true);
   };
 
-  const handleDelete=(id)=>{
-    if (window.confirm('Ви впевнені, що хочете видалити категорію?')) {
-      console.log('delete category id :', id)
-      dispatch(deleteCategory(id));
-    }
-  }
+  const handleDelete = async (d) => {
+    const ok = await confirm({
+      title: "Видалити категорію?",
+      text: `Категорію «${d.name}» буде видалено. Цю дію не можна скасувати.`,
+      confirmLabel: "Видалити",
+      tone: "danger",
+    });
+    if (ok) dispatch(deleteCategory(d._id));
+  };
+
+  const columns = [
+    {
+      key: "n",
+      header: "№",
+      width: "56px",
+      hideOnCard: true,
+      render: (_, i) => <span className="tabular-nums text-(--ink-2)">{(currentPage - 1) * perPage + i + 1}</span>,
+    },
+    {
+      key: "name",
+      header: "Категорія",
+      primary: true,
+      render: (d) => (
+        <span className="flex min-w-0 items-center gap-3">
+          {d.image ? (
+            <img src={d.image} alt="" className="h-11 w-11 shrink-0 rounded-(--r-md) border border-(--line) bg-(--surface-2) object-cover" />
+          ) : (
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-(--r-md) bg-(--surface-2) text-(--ink-2)" aria-hidden="true">
+              <MdCategory />
+            </span>
+          )}
+          <span className="min-w-0 break-words font-medium">{d.name}</span>
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Дії",
+      align: "right",
+      cardLabel: "Дії",
+      render: (d) => (
+        <span className="inline-flex items-center justify-end gap-1">
+          <IconButton icon={<MdEdit />} label={`Змінити «${d.name}»`} size="sm" variant="secondary" onClick={() => handleEdit(d)} />
+          <IconButton icon={<MdDeleteOutline />} label={`Видалити «${d.name}»`} size="sm" variant="ghost" className="text-(--danger)" onClick={() => handleDelete(d)} />
+        </span>
+      ),
+    },
+  ];
+
+  const form = (
+    <form onSubmit={addOrUpdateCategory} noValidate className="flex flex-col gap-4">
+      <Field label="Назва категорії" required error={errors.name}>
+        <Input
+          value={state.name}
+          onChange={(e) => {
+            setState({ ...state, name: e.target.value });
+            if (errors.name) setErrors({ ...errors, name: "" });
+          }}
+          name="category_name"
+          autoComplete="off"
+          placeholder="Напр., Смартфони"
+          maxLength={80}
+        />
+      </Field>
+      <Field label="Зображення" required={!isEdit} error={errors.image} hint={isEdit ? "Залиште як є, щоб не змінювати" : undefined}>
+        <ImageDropzone onFile={onFile} preview={imageShow} invalid={!!errors.image} disabled={loader} heightClass="h-52" />
+      </Field>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button type="submit" loading={loader} className="flex-1">
+          {isEdit ? "Зберегти зміни" : "Додати категорію"}
+        </Button>
+        {isEdit && (
+          <Button variant="secondary" onClick={resetForm} disabled={loader}>
+            Скасувати
+          </Button>
+        )}
+      </div>
+    </form>
+  );
 
   return (
-    <div className="px-2 lg:px-7 pt-5">
-      <div className="flex lg:hidden justify-between items-center mb-5 p-4 bg-[#6a5fdf] rounded-md">
-        <h1 className="text-[#d0d2d6] font-semibold text-lg">Категорія</h1>
+    <div>
+      <PageHeader
+        title="Категорії"
+        description="Категорії каталогу магазину: назва та зображення для вітрини."
+        actions={
+          <Button icon={<MdAdd />} onClick={openNew} className="lg:hidden">
+            Додати категорію
+          </Button>
+        }
+      />
 
-        <button
-          onClick={() => setShow(true)}
-          className="bg-red-500 shadow-lg hover:shadow-red-500/40 px-4 py-2 cursor-pointer text-white rounded-sm text-sm"
-        >
-          Додати
-        </button>
-      </div>
-
-      <div className="flex flex-wrap w-full">
-        <div className="w-full lg:w-7/12">
-          <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-            <Search
-              setPerPage={setPerPage}
-              setSearchValue={setSearchValue}
-              searchValue={searchValue}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <div className="min-w-0">
+          <FilterBar
+            search={{
+              value: searchValue,
+              onChange: (v) => {
+                setSearchValue(v);
+                setCurrentPage(1);
+              },
+              placeholder: "Пошук категорії",
+            }}
+          >
+            <Select
+              aria-label="Кількість на сторінці"
+              options={PER_PAGE_OPTIONS}
+              value={perPage}
+              onChange={(e) => {
+                setPerPage(parseInt(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="w-44"
             />
-
-            <div className="relative overflow-x-auto">
-              <table className="w-full text-sm text-left text-[#d0d2d6]">
-                <thead className="text-sm text-[#d0d2d6] uppercase border-b border-slate-700 ">
-                  <tr>
-                    <th scope="col" className="py-3 px-4">
-                      №
-                    </th>
-                    <th scope="col" className="py-3 px-4">
-                      Зображення
-                    </th>
-                    <th scope="col" className="py-3 px-4">
-                      Назва
-                    </th>
-                    <th scope="col" className="py-3 px-4">
-                      Дія
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {categories.map((d, i) => (
-                    <tr key={i}>
-                      <td
-                        scope="row"
-                        className="py-1 px-6 font-medium whitespace-nowrap"
-                      >
-                        {i + 1}
-                      </td>
-                      <td
-                        scope="row"
-                        className="py-1 px-4 font-medium whitespace-nowrap"
-                      >
-                        <img
-                          className="w-[45px] h-[45px] "
-                          src={d.image}
-                          alt=""
-                        />
-                      </td>
-                      <td
-                        scope="row"
-                        className="py-1 px-4 font-medium whitespace-nowrap"
-                      >
-                        {d.name}
-                      </td>
-                      <td
-                        scope="row"
-                        className="py-1 px-4 font-medium whitespace-nowrap"
-                      >
-                        <div className="flex justify-start items-center gap-4">
-                          <Link
-                            onClick={() => handleEdit(d)}
-                            className="p-[6px] bg-yellow-500 rounded hover:shadow-lg hover:shadow-yellow-500/50  "
-                          >
-                            <FaEdit />
-                          </Link>
-                          <Link
-                            onClick={() => handleDelete(d._id)}
-                            className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50  "
-                          >
-                            <FaTrash />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="w-full flex justify-end mt-4 bottom-4 right-4">
-              <Pagination
-                pageNumber={currentPage}
-                setPageNumber={setCurrentPage}
-                totalItem={50}
-                perPage={perPage}
-                showItem={3}
-              />
-            </div>
-          </div>
+          </FilterBar>
+          <Table
+            caption="Категорії"
+            columns={columns}
+            rows={categories}
+            loading={listLoading && !categories.length}
+            empty={{
+              icon: <MdCategory />,
+              title: searchValue ? "Нічого не знайдено" : "Категорій ще немає",
+              text: searchValue ? "Спробуйте інший запит." : "Додайте першу категорію — вона з'явиться в каталозі.",
+            }}
+          />
+          <Pagination page={currentPage} total={totalCategory || 0} perPage={perPage} onChange={setCurrentPage} />
         </div>
 
-        <div
-          className={`fixed top-0 right-0 z-[9999] w-[320px] lg:w-5/12 transition-transform duration-500 ${
-            show ? "translate-x-0" : "translate-x-full"
-          } lg:relative lg:translate-x-0 lg:top-auto lg:right-auto`}
-        >
-          <div className="w-full pl-5">
-            <div className="bg-[#6a5fdf] h-screen lg:h-auto px-3 py-2 lg:rounded-md text-[#d0d2d6]">
-              <div className="flex justify-between items-center mb-4">
-                <h1 className="text-[#d0d2d6] font-semibold text-xl mb-4 w-full text-center">
-                  {isEdit ? "Змінити категорію" : "Додати категорію"}
-                </h1>
-                <div onClick={() => setShow(false)} className="block lg:hidden">
-                  <IoMdCloseCircle />
-                </div>
-              </div>
-
-              <form onSubmit={addOrUpdateCategory}>
-                <div className="flex flex-col w-full gap-1 mb-3">
-                  <label htmlFor="name">Назва категорії</label>
-                  <input
-                    value={state.name}
-                    onChange={(e) =>
-                      setState({ ...state, name: e.target.value })
-                    }
-                    className="px-4 py-2 focus:border-indigo-600 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-                    type="text"
-                    id="name"
-                    name="category_name"
-                    placeholder="Назва категорії"
-                  />
-                </div>
-                <div>
-                  <label
-                    className="flex justify-center items-center flex-col h-[238px] cursor-pointer border border-dashed hover:border-indigo-600 w-full border-[#d0d2d6]"
-                    htmlFor="image"
-                  >
-                    {imageShow ? (
-                      <img className="w-full h-full" src={imageShow} />
-                    ) : (
-                      <>
-                        <span>
-                          <FaImage />
-                        </span>
-                        <span>Обрати зображення</span>
-                      </>
-                    )}
-                  </label>
-                  <input
-                    onChange={imageHandle}
-                    className="hidden"
-                    type="file"
-                    name="image"
-                    id="image"
-                  />
-                  <div className="mt-4">
-                    <button
-                      disabled={loader ? true : false}
-                      className="bg-red-800 w-full hover:shadow-red-300/50 hover:shadow-lg text-white rounded-md px-7 py-2 mb-3"
-                    >
-                      {loader ? (
-                        <PropagateLoader
-                          color="#fff"
-                          cssOverride={overrideStyle}
-                        />
-                      ) : isEdit ? (
-                        "Оновити категорію"
-                      ) : (
-                        "Додати категорію"
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+        <Card className="hidden self-start lg:sticky lg:top-[calc(var(--topbar-h)+1rem)] lg:block">
+          <CardHeader
+            title={isEdit ? "Змінити категорію" : "Нова категорія"}
+            description={isEdit ? "Оновіть назву або зображення." : "Заповніть назву та додайте зображення."}
+            icon={<MdCategory />}
+          />
+          <CardBody>{form}</CardBody>
+        </Card>
       </div>
+
+      <Drawer open={show} onClose={() => setShow(false)} title={isEdit ? "Змінити категорію" : "Нова категорія"} className="lg:hidden">
+        <div className="p-5">{form}</div>
+      </Drawer>
+      {confirmEl}
     </div>
   );
 };
